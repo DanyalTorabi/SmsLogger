@@ -1,0 +1,24 @@
+// Top-level build.gradle
+
+buildscript {
+    // Define repositories if you haven't already (e.g., google(), mavenCentral())
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Define versions for your plugins if needed
+        // classpath "com.android.tools.build:gradle:8.2.0" // Example
+        // classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22" // Example
+    }
+}
+
+plugins {
+    id("com.android.application") version '8.11.0' apply false // Or your AGP version
+    id("org.jetbrains.kotlin.android") version "1.9.22" apply false // Or your Kotlin version
+    id("com.google.devtools.ksp") version "1.9.22-1.0.17" apply false // Make sure version is compatible
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.buildDir
+}
