@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <!-- Permission for Foreground Service (if you need continuous monitoring) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Required for Android 13+ for foreground service notifications -->
 
     <application
@@ -36,7 +37,9 @@
 <!--        &lt;!&ndash; Declare your Service &ndash;&gt;-->
         <service
             android:name=".service.SmsLoggingService"
-            android:exported="false" />
+            android:foregroundServiceType="dataSync"
+            android:exported="false"
+            tools:ignore="ForegroundServicePermission" />
 <!--        &lt;!&ndash; Set exported="true" if you need to start it from other apps,-->
 <!--             but for local logging, false is safer. &ndash;&gt;-->
 <!--    -->
