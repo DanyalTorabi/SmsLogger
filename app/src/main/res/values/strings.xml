@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">SmsLogger</string>
     <string name="start_sms_logging_service">Start SMS Logging Service</string>
-        <string name="log_all_db_sms_to_logcat">Log All DB SMS to Logcat</string>
+    <string name="log_all_db_sms_to_logcat">Log All DB SMS to Logcat</string>
 </resources>
