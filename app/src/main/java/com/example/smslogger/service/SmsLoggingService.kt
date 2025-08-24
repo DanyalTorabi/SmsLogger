@@ -87,7 +87,10 @@ class SmsLoggingService : Service() {
                 Telephony.Sms.ADDRESS,
                 Telephony.Sms.BODY,
                 Telephony.Sms.DATE,
-                Telephony.Sms.TYPE
+                Telephony.Sms.DATE_SENT,
+                Telephony.Sms.TYPE,
+                Telephony.Sms.THREAD_ID,
+                Telephony.Sms.PERSON
             )
 
             // Sort by date in descending order to process newest messages first
@@ -102,7 +105,10 @@ class SmsLoggingService : Service() {
                     val addressColumn = it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS)
                     val bodyColumn = it.getColumnIndexOrThrow(Telephony.Sms.BODY)
                     val dateColumn = it.getColumnIndexOrThrow(Telephony.Sms.DATE)
+                    val dateSentColumn = it.getColumnIndexOrThrow(Telephony.Sms.DATE_SENT)
                     val typeColumn = it.getColumnIndexOrThrow(Telephony.Sms.TYPE)
+                    val threadIdColumn = it.getColumnIndexOrThrow(Telephony.Sms.THREAD_ID)
+                    val personColumn = it.getColumnIndexOrThrow(Telephony.Sms.PERSON)
 
                     val smsDao = database.smsDao()
 
@@ -118,7 +124,10 @@ class SmsLoggingService : Service() {
                         val address = it.getString(addressColumn)
                         val body = it.getString(bodyColumn)
                         val date = it.getLong(dateColumn)
+                        val dateSent = if (it.isNull(dateSentColumn)) null else it.getLong(dateSentColumn)
                         val typeInt = it.getInt(typeColumn)
+                        val threadId = if (it.isNull(threadIdColumn)) null else it.getLong(threadIdColumn)
+                        val person = it.getString(personColumn) // This can be null
 
                         // Skip if address or body is null
                         if (address == null || body == null) {
@@ -150,7 +159,10 @@ class SmsLoggingService : Service() {
                             eventTimestamp = System.currentTimeMillis(),
                             phoneNumber = address,
                             body = body,
-                            eventType = eventType
+                            eventType = eventType,
+                            threadId = threadId,
+                            dateSent = dateSent,
+                            person = person
                         )
 
                         // Add to our list (in reverse chronological order)
