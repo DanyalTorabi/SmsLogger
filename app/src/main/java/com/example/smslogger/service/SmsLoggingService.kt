@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.ContentResolver
+import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
@@ -31,15 +32,11 @@ class SmsLoggingService : Service() {
     private var serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
-    // Note: Changed from lateinit to nullable and initialize in onCreate
-    // to avoid potential issues if getDatabase is called very early.
-    // Or, ensure AppDatabase.getDatabase is robust enough.
-    // For simplicity, direct initialization in onCreate is fine.
-    private lateinit var db: AppDatabase // Renamed from smsDao to db for clarity (it's the AppDatabase instance)
+    private lateinit var db: AppDatabase
 
     override fun onCreate() {
         super.onCreate()
-        db = AppDatabase.getDatabase(applicationContext) // Initialize AppDatabase instance
+        db = AppDatabase.getDatabase(applicationContext)
         Log.d(TAG, "Service Created")
         createNotificationChannel()
     }
@@ -49,47 +46,93 @@ class SmsLoggingService : Service() {
         Log.d(TAG, "Service Started")
         startForeground(NOTIFICATION_ID, createNotification())
 
+        // Sync SMS messages in the background
         serviceScope.launch {
-            logExistingSmsMessages()
+            try {
+                val syncStart = System.currentTimeMillis()
+                val syncCount = syncNewSmsMessages(applicationContext, db)
+                val syncTime = System.currentTimeMillis() - syncStart
+
+                // Update notification with sync results
+                val notificationManager = getSystemService(NotificationManager::class.java)
+                notificationManager?.notify(
+                    NOTIFICATION_ID,
+                    createNotification("Synced $syncCount new SMS messages in ${syncTime}ms")
+                )
+
+                Log.d(TAG, "Initial SMS sync complete: found $syncCount new messages in ${syncTime}ms")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during initial SMS sync", e)
+            }
         }
         return START_STICKY
     }
 
-    private suspend fun logExistingSmsMessages() {
-        Log.d(TAG, "Starting to log existing SMS messages...")
-        val contentResolver: ContentResolver = applicationContext.contentResolver
-        val smsUri: Uri = Telephony.Sms.CONTENT_URI
-        val projection = arrayOf(
-            Telephony.Sms._ID,
-            Telephony.Sms.ADDRESS,
-            Telephony.Sms.BODY,
-            Telephony.Sms.DATE,
-            Telephony.Sms.TYPE
-        )
+    /**
+     * Synchronized function to fetch and process new SMS messages
+     * This function is designed to be used in both startup routine and onReceive
+     *
+     * @param context Application context to access ContentResolver
+     * @param database Database instance to use for operations
+     * @return Number of new SMS messages added to the database
+     */
+    companion object {
+        suspend fun syncNewSmsMessages(context: Context, database: AppDatabase): Int {
+            val TAG = "SmsLoggingService"
+            Log.d(TAG, "Starting to sync new SMS messages...")
+            val contentResolver: ContentResolver = context.contentResolver
+            val smsUri: Uri = Telephony.Sms.CONTENT_URI
+            val projection = arrayOf(
+                Telephony.Sms._ID,
+                Telephony.Sms.ADDRESS,
+                Telephony.Sms.BODY,
+                Telephony.Sms.DATE,
+                Telephony.Sms.TYPE
+            )
 
-        val cursor: Cursor? = contentResolver.query(smsUri, projection, null, null, Telephony.Sms.DEFAULT_SORT_ORDER)
+            // Sort by date in descending order to process newest messages first
+            val sortOrder = "${Telephony.Sms.DATE} DESC"
 
-        cursor?.use {
-            if (it.moveToFirst()) {
-                val idColumn = it.getColumnIndexOrThrow(Telephony.Sms._ID)
-                val addressColumn = it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS)
-                val bodyColumn = it.getColumnIndexOrThrow(Telephony.Sms.BODY)
-                val dateColumn = it.getColumnIndexOrThrow(Telephony.Sms.DATE)
-                val typeColumn = it.getColumnIndexOrThrow(Telephony.Sms.TYPE)
+            val cursor: Cursor? = contentResolver.query(smsUri, projection, null, null, sortOrder)
+            var newSmsCount = 0
 
-                val smsDao = db.smsDao() // Get DAO instance from AppDatabase
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val idColumn = it.getColumnIndexOrThrow(Telephony.Sms._ID)
+                    val addressColumn = it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS)
+                    val bodyColumn = it.getColumnIndexOrThrow(Telephony.Sms.BODY)
+                    val dateColumn = it.getColumnIndexOrThrow(Telephony.Sms.DATE)
+                    val typeColumn = it.getColumnIndexOrThrow(Telephony.Sms.TYPE)
 
-                do {
-                    val smsIdFromProvider = it.getLong(idColumn) // Renamed for clarity
-                    val address = it.getString(addressColumn)
-                    val body = it.getString(bodyColumn)
-                    val date = it.getLong(dateColumn)
-                    val typeInt = it.getInt(typeColumn)
+                    val smsDao = database.smsDao()
 
-                    // Check if this SMS ID already exists in our database
-                    val existingSms = smsDao.getSmsByOriginalId(smsIdFromProvider) // MODIFICATION HERE
+                    // Reset cursor to beginning
+                    it.moveToFirst()
 
-                    if (existingSms == null) { // Only insert if it doesn't exist
+                    // Second pass: Process all SMS messages up to the boundary (or all if no boundary found)
+                    // We need to process them in chronological order (oldest first)
+                    val smsToProcess = mutableListOf<SmsMessage>()
+
+                    do {
+                        val smsIdFromProvider = it.getLong(idColumn)
+                        val address = it.getString(addressColumn)
+                        val body = it.getString(bodyColumn)
+                        val date = it.getLong(dateColumn)
+                        val typeInt = it.getInt(typeColumn)
+
+                        // Skip if address or body is null
+                        if (address == null || body == null) {
+                            continue
+                        }
+
+                        // Check if this SMS already exists in our database
+                        val existingSms = smsDao.getSmsByOriginalId(smsIdFromProvider)
+                        if (existingSms != null) {
+                            // Reached where the all messages before this one are already logged to DB.
+                            break
+                        }
+
+                        // If not found, create a new SmsMessage object to be inserted later
                         val eventType = when (typeInt) {
                             Telephony.Sms.MESSAGE_TYPE_INBOX -> "RECEIVED"
                             Telephony.Sms.MESSAGE_TYPE_SENT -> "SENT"
@@ -101,32 +144,38 @@ class SmsLoggingService : Service() {
                         }
 
                         val smsEntry = SmsMessage(
-                            // id is auto-generated by Room
-                            smsId = smsIdFromProvider, // Store the original Telephony.Sms._ID
+                            id = 0, // Let Room generate a unique ID
+                            smsId = smsIdFromProvider,
                             smsTimestamp = date,
                             eventTimestamp = System.currentTimeMillis(),
-                            phoneNumber = address ?: "Unknown",
-                            body = body ?: "",
+                            phoneNumber = address,
+                            body = body,
                             eventType = eventType
                         )
 
+                        // Add to our list (in reverse chronological order)
+                        smsToProcess.add(smsEntry)
+
+                    } while (it.moveToNext())
+
+                    // Now insert SMS entries in chronological order (oldest first)
+                    for (smsEntry in smsToProcess.reversed()) {
                         try {
                             smsDao.insertSms(smsEntry)
-                            Log.d(TAG, "Logged NEW existing SMS: ProviderID $smsIdFromProvider, Type: $eventType")
+                            newSmsCount++
+                            Log.d(TAG, "Added new SMS: ProviderID ${smsEntry.smsId}, Type: ${smsEntry.eventType}")
                         } catch (e: Exception) {
-                            Log.e(TAG, "Error saving new existing SMS (ProviderID: $smsIdFromProvider) to database", e)
+                            Log.e(TAG, "Error saving SMS (ProviderID: ${smsEntry.smsId}) to database", e)
                         }
-                    } else {
-                        Log.d(TAG, "Skipped existing SMS (already logged): ProviderID $smsIdFromProvider")
                     }
 
-                } while (it.moveToNext())
-                Log.d(TAG, "Finished processing existing SMS messages.")
-            } else {
-                Log.d(TAG, "No existing SMS messages found to log.")
+                    Log.d(TAG, "Synced $newSmsCount new SMS messages")
+                } else {
+                    Log.d(TAG, "No SMS messages found to sync")
+                }
             }
-        } ?: run {
-            Log.w(TAG, "Could not query SMS messages. Cursor is null.")
+
+            return newSmsCount
         }
     }
 
@@ -142,10 +191,10 @@ class SmsLoggingService : Service() {
         }
     }
 
-    private fun createNotification(): Notification {
+    private fun createNotification(contentText: String = "Logging SMS messages in the background."): Notification {
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Sms Logger Active")
-            .setContentText("Logging SMS messages in the background.")
+            .setContentText(contentText)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()

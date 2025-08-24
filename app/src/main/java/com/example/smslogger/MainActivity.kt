@@ -99,25 +99,30 @@ class MainActivity : AppCompatActivity() {
 
     // New function to log all SMS messages from the database to Logcat
     private fun logAllSmsFromDbToLogcat() {
-        lifecycleScope.launch { // Use lifecycleScope for coroutines tied to activity lifecycle
-            Log.i(TAG, "Fetching all SMS from database to log...")
-            val smsList: List<SmsMessage> = withContext(Dispatchers.IO) {
-                // Access DAO and fetch data on IO dispatcher
-                val smsDao = AppDatabase.getDatabase(applicationContext).smsDao()
-                smsDao.getAllSmsList()
-            }
+        Toast.makeText(this, "Fetching all SMS from database...", Toast.LENGTH_SHORT).show()
 
-            if (smsList.isEmpty()) {
-                Log.i(TAG, "No SMS messages found in the local database.")
-                Toast.makeText(this@MainActivity, "No SMS messages in DB.", Toast.LENGTH_SHORT).show()
-            } else {
-                Log.i(TAG, "--- Dumping ${smsList.size} SMS messages from DB ---")
-                smsList.forEachIndexed { index, sms ->
-                    // Log relevant details of each SMS. Adjust as needed.
-                    Log.d(TAG, "DB SMS ${index + 1}: ID=${sms.id}, OriginalSmsID=${sms.smsId}, Phone='${sms.phoneNumber}', Type='${sms.eventType}', EventTS=${sms.eventTimestamp}, SmsTS=${sms.smsTimestamp}, Body='${sms.body.take(60).replace("\n", " ")}...'")
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val allSms = AppDatabase.getDatabase(applicationContext).smsDao().getAllSmsList()
+                Log.d(TAG, "Found ${allSms.size} SMS messages in database")
+
+                allSms.forEach { sms ->
+                    Log.d(TAG, "SMS[ID: ${sms.id}] From: ${sms.phoneNumber}, Type: ${sms.eventType}, " +
+                            "Date: ${sms.smsTimestamp}, Body: ${sms.body.take(30)}${if (sms.body.length > 30) "..." else ""}")
                 }
-                Log.i(TAG, "--- End of DB SMS Dump ---")
-                Toast.makeText(this@MainActivity, "Logged ${smsList.size} SMS to Logcat.", Toast.LENGTH_SHORT).show()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity,
+                        "Logged ${allSms.size} SMS messages to Logcat",
+                        Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error reading SMS from database", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity,
+                        "Error reading SMS: ${e.message}",
+                        Toast.LENGTH_LONG).show()
+                }
             }
         }
     }

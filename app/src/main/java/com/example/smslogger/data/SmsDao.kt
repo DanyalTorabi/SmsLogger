@@ -23,4 +23,11 @@ interface SmsDao {
      */
     @Query("SELECT * FROM sms_log WHERE smsId = :originalSmsId LIMIT 1")
     suspend fun getSmsByOriginalId(originalSmsId: Long): SmsMessage? // Added this method
+
+    /**
+     * Checks if there is already an SMS with the same sender, body, and approximately the same timestamp.
+     * This is used as a backup check when the provider SMS ID is not available.
+     */
+    @Query("SELECT * FROM sms_log WHERE phoneNumber = :phoneNumber AND body = :body AND ABS(smsTimestamp - :timestamp) < 5000 LIMIT 1")
+    suspend fun findSimilarSms(phoneNumber: String, body: String, timestamp: Long): SmsMessage?
 }
