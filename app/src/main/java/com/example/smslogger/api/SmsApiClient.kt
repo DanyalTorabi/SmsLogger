@@ -53,20 +53,18 @@ class SmsApiClient(
         Log.d(TAG, "Authenticating with server...")
 
         try {
-            // Create Basic Auth header
-            val credentials = "$username:$password"
-            val basicAuth = "Basic " + Base64.encodeToString(
-                credentials.toByteArray(),
-                Base64.NO_WRAP
-            )
+            // Create JSON body for login (updated API)
+            val loginRequest = AuthRequest(username, password)
+            val jsonBody = json.encodeToString(AuthRequest.serializer(), loginRequest)
+            val requestBody = jsonBody.toRequestBody("application/json".toMediaType())
 
             val request = Request.Builder()
                 .url("$baseUrl/api/auth/login")
-                .post("".toRequestBody()) // Empty body for login
-                .header("Authorization", basicAuth)
+                .post(requestBody)
                 .header("Content-Type", "application/json")
                 .build()
 
+            Log.d(TAG, "Authenticating with base URL:[$baseUrl] user:[$username]")
             val response = httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
