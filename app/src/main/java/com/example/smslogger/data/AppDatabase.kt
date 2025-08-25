@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [SmsMessage::class], version = 2, exportSchema = false)
+@Database(entities = [SmsMessage::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun smsDao(): SmsDao
@@ -25,6 +25,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add the syncedAt column for tracking server sync status
+                database.execSQL("ALTER TABLE sms_log ADD COLUMN syncedAt INTEGER")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -32,7 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "sms_logger_database" // Name of your SQLite file
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     // Wipes and rebuilds instead of migrating if no Migration object.
                     // .fallbackToDestructiveMigration() // Use with caution for production
                     .build()

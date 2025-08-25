@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope // Import lifecycleScope
 import com.example.smslogger.data.AppDatabase // Import AppDatabase
 import com.example.smslogger.data.SmsMessage // Import SmsMessage
 import com.example.smslogger.service.SmsLoggingService
+import com.example.smslogger.service.SmsSyncService
 import kotlinx.coroutines.Dispatchers // Import Dispatchers
 import kotlinx.coroutines.launch // Import launch
 import kotlinx.coroutines.withContext // Import withContext
@@ -24,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
     private lateinit var startServiceButton: Button
     private lateinit var buttonLogAllSms: Button
+    private lateinit var startSyncServiceButton: Button
 
     private val requestPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -107,8 +109,12 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "Found ${allSms.size} SMS messages in database")
 
                 allSms.forEach { sms ->
+                    val syncStatus = if (sms.syncedAt != null) "Synced" else "Pending"
                     Log.d(TAG, "SMS[ID: ${sms.id}] From: ${sms.phoneNumber}, Type: ${sms.eventType}, " +
-                            "Date: ${sms.smsTimestamp}, Body: ${sms.body.take(30)}${if (sms.body.length > 30) "..." else ""}")
+                            "Date: ${sms.smsTimestamp}, DateSent: ${sms.dateSent ?: "N/A"}, " +
+                            "ThreadID: ${sms.threadId ?: "N/A"}, Person: ${sms.person ?: "N/A"}, " +
+                            "Sync: $syncStatus, " +
+                            "Body: ${sms.body.take(30)}${if (sms.body.length > 30) "..." else ""}")
                 }
 
                 withContext(Dispatchers.Main) {

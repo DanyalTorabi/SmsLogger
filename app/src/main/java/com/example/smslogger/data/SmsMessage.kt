@@ -15,5 +15,6 @@ data class SmsMessage(
     val eventType: String,          // 7- Event Type: "RECEIVED", "SENT", "DELIVERED", etc.
     val threadId: Long?,            // 8- Thread ID from SMS provider (groups related messages)
     val dateSent: Long?,            // 9- Date/Time when SMS was sent (from sender's perspective)
-    val person: String?             // 10- Contact name if phone number matches a contact
+    val person: String?,            // 10- Contact name if phone number matches a contact
+    val syncedAt: Long? = null      // 11- Timestamp when successfully synced to server (null = not synced)
 )

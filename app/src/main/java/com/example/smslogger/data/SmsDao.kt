@@ -30,4 +30,23 @@ interface SmsDao {
      */
     @Query("SELECT * FROM sms_log WHERE phoneNumber = :phoneNumber AND body = :body AND ABS(smsTimestamp - :timestamp) < 5000 LIMIT 1")
     suspend fun findSimilarSms(phoneNumber: String, body: String, timestamp: Long): SmsMessage?
+
+    /**
+     * Get all unsynced SMS messages (where syncedAt is null)
+     * Ordered by eventTimestamp to sync oldest first
+     */
+    @Query("SELECT * FROM sms_log WHERE syncedAt IS NULL ORDER BY eventTimestamp ASC")
+    suspend fun getUnsyncedSms(): List<SmsMessage>
+
+    /**
+     * Mark an SMS as synced by updating syncedAt with current timestamp
+     */
+    @Query("UPDATE sms_log SET syncedAt = :syncTimestamp WHERE id = :smsId")
+    suspend fun markAsSynced(smsId: Long, syncTimestamp: Long)
+
+    /**
+     * Get count of unsynced messages for monitoring
+     */
+    @Query("SELECT COUNT(*) FROM sms_log WHERE syncedAt IS NULL")
+    suspend fun getUnsyncedCount(): Int
 }

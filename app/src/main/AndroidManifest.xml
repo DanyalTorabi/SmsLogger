@@ -16,6 +16,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Required for Android 13+ for foreground service notifications -->
     <!-- Permission to receive boot completed broadcasts -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Internet permission for API communication -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -35,27 +38,33 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-<!--    -->
-<!--        &lt;!&ndash; Declare your Service &ndash;&gt;-->
+
+        <!-- SMS Logging Service -->
         <service
             android:name=".service.SmsLoggingService"
             android:foregroundServiceType="dataSync"
             android:exported="false"
             tools:ignore="ForegroundServicePermission" />
-<!--        &lt;!&ndash; Set exported="true" if you need to start it from other apps,-->
-<!--             but for local logging, false is safer. &ndash;&gt;-->
-<!--    -->
-<!--        &lt;!&ndash; Declare your BroadcastReceiver for incoming SMS &ndash;&gt;-->
+
+        <!-- SMS Sync Service for server synchronization -->
+        <service
+            android:name=".service.SmsSyncService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false"
+            tools:ignore="ForegroundServicePermission" />
+
+        <!-- Declare your BroadcastReceiver for incoming SMS -->
         <receiver
             android:name=".receiver.SmsReceiver"
             android:enabled="true"
             android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS"> <!-- More specific permission for security -->
+            android:permission="android.permission.BROADCAST_SMS">
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
-<!-- Receiver to restart service after device boot -->
+
+        <!-- Receiver to restart service after device boot -->
         <receiver
             android:name=".receiver.BootCompletedReceiver"
             android:enabled="true"

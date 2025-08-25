@@ -162,7 +162,8 @@ class SmsLoggingService : Service() {
                             eventType = eventType,
                             threadId = threadId,
                             dateSent = dateSent,
-                            person = person
+                            person = person,
+                            syncedAt = null // New messages start as unsynced
                         )
 
                         // Add to our list (in reverse chronological order)

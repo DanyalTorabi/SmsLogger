@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.serialization'
     id("com.google.devtools.ksp")  // For Room annotation processing
 }
 
@@ -46,6 +47,11 @@ dependencies {
     implementation libs.androidx.room.ktx
     implementation libs.androidx.lifecycle.viewmodel.ktx
     implementation libs.androidx.lifecycle.livedata.ktx// Use latest
+
+    // HTTP client for API calls
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2'
 
     // Room Persistence Library
     def room_version = "2.6.1" // Use the latest stable version
