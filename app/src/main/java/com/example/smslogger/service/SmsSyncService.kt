@@ -58,9 +58,9 @@ class SmsSyncService : Service() {
         // Initialize API client with configuration
         // TODO: These should be configurable via settings or build config
         apiClient = SmsApiClient(
-            baseUrl = "http://your-server-url:8080", // Configure this
-            username = "your-username", // Configure this
-            password = "your-password"  // Configure this
+            baseUrl = "http://localhost:8080", // Configure this
+            username = "testuser", // Configure this
+            password = "testpass"  // Configure this
         )
 
         Log.d(TAG, "SMS Sync Service Created")
@@ -79,9 +79,9 @@ class SmsSyncService : Service() {
     }
 
     /**
-     * Start the continuous sync process
+     * Start the continuous sync process with retry logic
      */
-    private fun startSyncProcess() {
+    private fun startSyncProcess(connectionRetryAttempt: Int = 0) {
         if (isSyncing) {
             Log.d(TAG, "Sync already in progress, skipping")
             return
@@ -89,18 +89,21 @@ class SmsSyncService : Service() {
 
         syncJob = serviceScope.launch {
             isSyncing = true
-            Log.d(TAG, "Starting SMS sync process...")
+            Log.d(TAG, "Starting SMS sync process... (connection attempt ${connectionRetryAttempt + 1})")
 
             try {
                 // Test connection first
                 if (!apiClient.testConnection()) {
                     Log.e(TAG, "Cannot connect to server, will retry later")
-                    scheduleRetry(1)
+                    val nextAttempt = connectionRetryAttempt + 1
+                    scheduleConnectionRetry(nextAttempt)
                     return@launch
                 }
 
+                Log.d(TAG, "Successfully connected to server, starting sync")
+
                 // Start continuous sync loop
-                var retryAttempt = 0
+                var syncRetryAttempt = 0
 
                 while (isActive) {
                     try {
@@ -109,14 +112,14 @@ class SmsSyncService : Service() {
                         if (syncedCount > 0) {
                             Log.d(TAG, "Synced $syncedCount messages successfully")
                             updateNotification("Synced $syncedCount messages")
-                            retryAttempt = 0 // Reset retry counter on success
+                            syncRetryAttempt = 0 // Reset retry counter on success
                         }
 
                         // Check if there are more messages to sync
                         val remainingCount = db.smsDao().getUnsyncedCount()
                         if (remainingCount == 0) {
                             Log.d(TAG, "All messages synced, waiting for new messages...")
-                            updateNotification("All messages synced (${getRemainingCount()} remaining)")
+                            updateNotification("All messages synced")
                             delay(30000) // Wait 30 seconds before checking again
                         } else {
                             // Continue syncing with a short delay
@@ -124,11 +127,11 @@ class SmsSyncService : Service() {
                         }
 
                     } catch (e: Exception) {
-                        retryAttempt++
-                        Log.e(TAG, "Sync batch failed (attempt $retryAttempt)", e)
+                        syncRetryAttempt++
+                        Log.e(TAG, "Sync batch failed (attempt $syncRetryAttempt)", e)
 
-                        val delay = calculateRetryDelay(retryAttempt)
-                        Log.d(TAG, "Retrying in ${delay}ms...")
+                        val delay = calculateRetryDelay(syncRetryAttempt)
+                        Log.d(TAG, "Retrying sync in ${delay}ms...")
                         updateNotification("Sync failed, retrying in ${delay/1000}s...")
 
                         delay(delay)
@@ -137,6 +140,8 @@ class SmsSyncService : Service() {
 
             } catch (e: Exception) {
                 Log.e(TAG, "Sync process failed", e)
+                val nextAttempt = connectionRetryAttempt + 1
+                scheduleConnectionRetry(nextAttempt)
             } finally {
                 isSyncing = false
             }
@@ -211,6 +216,20 @@ class SmsSyncService : Service() {
 
             delay(delay)
             startSyncProcess()
+        }
+    }
+
+    /**
+     * Schedule a connection retry after failure
+     */
+    private fun scheduleConnectionRetry(attempt: Int) {
+        syncJob = serviceScope.launch {
+            val delay = calculateRetryDelay(attempt)
+            Log.d(TAG, "Scheduling connection retry in ${delay}ms (attempt $attempt)")
+            updateNotification("Connection failed, retrying in ${delay/1000}s...")
+
+            delay(delay)
+            startSyncProcess(attempt)
         }
     }
 

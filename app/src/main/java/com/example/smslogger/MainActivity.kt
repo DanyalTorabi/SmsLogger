@@ -92,10 +92,16 @@ class MainActivity : AppCompatActivity() {
                 startService(serviceIntent)
             }
             Log.d(TAG, "SmsLoggingService start command sent.")
-            Toast.makeText(this, "SMS Logging Service starting...", Toast.LENGTH_SHORT).show()
+
+            // Also start the SMS sync service
+            Log.d(TAG, "Starting SMS Sync Service...")
+            SmsSyncService.startService(this)
+            Log.d(TAG, "SMS Sync Service start command sent.")
+
+            Toast.makeText(this, "SMS Logging and Sync Services starting...", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Log.e(TAG, "Error starting SmsLoggingService", e)
-            Toast.makeText(this, "Error starting logging service: ${e.message}", Toast.LENGTH_LONG).show()
+            Log.e(TAG, "Error starting services", e)
+            Toast.makeText(this, "Error starting services: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
