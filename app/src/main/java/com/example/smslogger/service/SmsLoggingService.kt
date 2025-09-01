@@ -68,15 +68,27 @@ class SmsLoggingService : Service() {
         return START_STICKY
     }
 
-    /**
-     * Synchronized function to fetch and process new SMS messages
-     * This function is designed to be used in both startup routine and onReceive
-     *
-     * @param context Application context to access ContentResolver
-     * @param database Database instance to use for operations
-     * @return Number of new SMS messages added to the database
-     */
     companion object {
+        /**
+         * Start the SMS logging service
+         */
+        fun startService(context: Context) {
+            val intent = Intent(context, SmsLoggingService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        }
+
+        /**
+         * Synchronized function to fetch and process new SMS messages
+         * This function is designed to be used in both startup routine and onReceive
+         *
+         * @param context Application context to access ContentResolver
+         * @param database Database instance to use for operations
+         * @return Number of new SMS messages added to the database
+         */
         suspend fun syncNewSmsMessages(context: Context, database: AppDatabase): Int {
             val TAG = "SmsLoggingService"
             Log.d(TAG, "Starting to sync new SMS messages...")

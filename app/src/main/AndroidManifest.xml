@@ -76,6 +76,21 @@
             </intent-filter>
         </receiver>
 
+        <!-- Auto-start receiver for app updates and manual triggers -->
+        <receiver
+            android:name=".receiver.AutoStartReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <data android:scheme="package" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.example.smslogger.START_SERVICES" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
