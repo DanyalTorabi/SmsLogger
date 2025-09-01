@@ -56,9 +56,10 @@ class SmsSyncService : Service() {
         db = AppDatabase.getDatabase(applicationContext)
 
         // Initialize API client with configuration
-        // TODO: These should be configurable via settings or build config
+        // Use 10.0.2.2 to access host machine from Android emulator
+        // For physical devices, you would use your actual IP address
         apiClient = SmsApiClient(
-            baseUrl = "http://localhost:8080", // Configure this
+            baseUrl = "http://10.0.2.2:8080", // Emulator access to host localhost
             username = "testuser", // Configure this
             password = "testpass"  // Configure this
         )
