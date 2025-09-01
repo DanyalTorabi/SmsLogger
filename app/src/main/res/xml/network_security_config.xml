@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic for development -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Emulator access to host -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- Localhost for development -->
+        <domain includeSubdomains="false">localhost</domain>
+        <!-- Local network range for testing -->
+        <domain includeSubdomains="false">192.168.1.1</domain>
+    </domain-config>
+
+    <!-- For production, you should use HTTPS only -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>
+
