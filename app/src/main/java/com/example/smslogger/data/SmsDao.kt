@@ -49,4 +49,34 @@ interface SmsDao {
      */
     @Query("SELECT COUNT(*) FROM sms_log WHERE syncedAt IS NULL")
     suspend fun getUnsyncedCount(): Int
+
+    /**
+     * Get count of synced messages
+     */
+    @Query("SELECT COUNT(*) FROM sms_log WHERE syncedAt IS NOT NULL")
+    suspend fun getSyncedCount(): Int
+
+    /**
+     * Get total message count
+     */
+    @Query("SELECT COUNT(*) FROM sms_log")
+    suspend fun getTotalMessageCount(): Int
+
+    /**
+     * Get oldest message timestamp
+     */
+    @Query("SELECT MIN(smsTimestamp) FROM sms_log")
+    suspend fun getOldestMessageTimestamp(): Long?
+
+    /**
+     * Get newest message timestamp
+     */
+    @Query("SELECT MAX(smsTimestamp) FROM sms_log")
+    suspend fun getNewestMessageTimestamp(): Long?
+
+    /**
+     * Delete old synced messages (for maintenance)
+     */
+    @Query("DELETE FROM sms_log WHERE syncedAt IS NOT NULL AND syncedAt < :cutoffTime")
+    suspend fun deleteOldSyncedMessages(cutoffTime: Long): Int
 }
