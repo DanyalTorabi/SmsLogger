@@ -98,6 +98,56 @@ cd SmsLogger
 
 ## Development
 
+### Development Workflow
+
+We follow a structured branching strategy to ensure clean development and safe releases. Please read our [Contributing Guidelines](CONTRIBUTING.md) for detailed information.
+
+#### Quick Start for Contributors
+
+1. **Fork and Clone**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/SmsLogger.git
+   cd SmsLogger
+   git remote add upstream https://github.com/DanyalTorabi/SmsLogger.git
+   ```
+
+2. **Create Feature Branch**
+   ```bash
+   git checkout develop
+   git pull upstream develop
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Make Changes and Test**
+   ```bash
+   # Make your changes
+   ./gradlew test
+   ./gradlew assembleDebug
+   ```
+
+4. **Submit Pull Request**
+   - Push your branch to your fork
+   - Create PR against `develop` branch
+   - Follow the PR template and guidelines
+
+#### Branch Structure
+- **`main`** - Production-ready code (protected)
+- **`develop`** - Integration branch for features
+- **`feature/*`** - Feature development branches
+- **`fix/*`** - Bug fix branches  
+- **`hotfix/*`** - Critical production fixes
+- **`release/*`** - Release preparation branches
+- **`devops/*`** - Infrastructure and tooling changes
+
+#### Branch Naming Examples
+- `feature/sms-backup-restore`
+- `fix/duplicate-message-detection`
+- `hotfix/service-crash-android-14`
+- `release/v1.3.0`
+- `devops/github-actions-ci`
+
+For complete workflow details, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ### Key Files
 - `MainActivity.kt`: Main UI and permission handling
 - `SmsLoggingService.kt`: Core background service with SMS processing
