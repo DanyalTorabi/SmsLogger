@@ -1,0 +1,97 @@
+name: Branch Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches-ignore:
+      - main
+      - develop
+
+jobs:
+  validate-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name
+        run: |
+          echo "Branch name: ${{ github.head_ref || github.ref_name }}"
+          
+          # Get branch name
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+          
+          # Define valid patterns
+          VALID_PATTERNS=(
+            "^feature\/[a-z0-9-]+$"
+            "^fix\/[a-z0-9-]+$"
+            "^hotfix\/[a-z0-9-]+$"
+            "^release\/v[0-9]+\.[0-9]+\.[0-9]+$"
+            "^devops\/[a-z0-9-]+$"
+          )
+          
+          # Check if branch name matches any valid pattern
+          VALID=false
+          for pattern in "${VALID_PATTERNS[@]}"; do
+            if [[ $BRANCH_NAME =~ $pattern ]]; then
+              VALID=true
+              echo "✅ Branch name '$BRANCH_NAME' matches pattern: $pattern"
+              break
+            fi
+          done
+          
+          if [ "$VALID" = false ]; then
+            echo "❌ Invalid branch name: $BRANCH_NAME"
+            echo ""
+            echo "Valid branch naming conventions:"
+            echo "  feature/description-of-feature"
+            echo "  fix/description-of-bug"
+            echo "  hotfix/critical-issue-description"
+            echo "  release/v1.2.3"
+            echo "  devops/infrastructure-change"
+            echo ""
+            echo "Examples:"
+            echo "  feature/sms-backup-restore"
+            echo "  fix/duplicate-message-detection"
+            echo "  hotfix/service-crash-android-14"
+            echo "  release/v1.3.0"
+            echo "  devops/github-actions-ci"
+            exit 1
+          fi
+
+  validate-target-branch:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Validate PR target branch
+        run: |
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          TARGET_BRANCH="${{ github.base_ref }}"
+          
+          echo "Source branch: $SOURCE_BRANCH"
+          echo "Target branch: $TARGET_BRANCH"
+          
+          # Define rules for target branches
+          case "$SOURCE_BRANCH" in
+            feature/* | fix/* | devops/*)
+              if [ "$TARGET_BRANCH" != "develop" ]; then
+                echo "❌ $SOURCE_BRANCH branches should target 'develop', not '$TARGET_BRANCH'"
+                exit 1
+              fi
+              ;;
+            hotfix/*)
+              if [ "$TARGET_BRANCH" != "main" ] && [ "$TARGET_BRANCH" != "develop" ]; then
+                echo "❌ hotfix branches should target 'main' or 'develop', not '$TARGET_BRANCH'"
+                exit 1
+              fi
+              ;;
+            release/*)
+              if [ "$TARGET_BRANCH" != "main" ]; then
+                echo "❌ release branches should target 'main', not '$TARGET_BRANCH'"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "⚠️ Unknown branch type, skipping target validation"
+              ;;
+          esac
+          
+          echo "✅ Target branch validation passed"
