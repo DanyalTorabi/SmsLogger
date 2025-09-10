@@ -1,15 +1,35 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
+
+# IntelliJ IDEA / Android Studio
+.idea/
+
+# OS generated files
+.DS_Store26
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Android Studio / Gradle
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystore files (security sensitive)
+*.jks
+*.keystore
+
+# Google Services (auto-generated)
+google-services.json
+
+# Fabric plugin (Crashlytics)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties

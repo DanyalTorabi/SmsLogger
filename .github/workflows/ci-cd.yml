@@ -36,8 +36,34 @@ jobs:
     - name: Run lint
       run: ./gradlew lint
 
-    - name: Run unit tests
-      run: ./gradlew test
+    - name: Run unit tests with coverage
+      run: ./gradlew testDebugUnitTest jacocoTestReport
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: app/build/test-results/
+        retention-days: 7
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-report
+        path: app/build/reports/jacoco/
+        retention-days: 7
+
+    - name: Verify minimum coverage thresholds
+      run: ./gradlew jacocoTestCoverageVerification
+
+    - name: Publish test report
+      uses: mikepenz/action-junit-report@v4
+      if: always()
+      with:
+        report_paths: 'app/build/test-results/testDebugUnitTest/*.xml'
+        fail_on_failure: true
 
     - name: Build debug APK
       run: ./gradlew assembleDebug
