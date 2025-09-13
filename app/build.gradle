@@ -104,8 +104,8 @@ tasks.register('jacocoTestReport', JacocoReport) {
         html.required = true
 
         // Specify the output directories for the reports
-        xml.outputLocation = file("${buildDir}/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
-        html.outputLocation = file("${buildDir}/reports/jacoco/jacocoTestReport/html")
+        xml.outputLocation = layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.xml").get().asFile
+        html.outputLocation = layout.buildDirectory.dir("reports/jacoco/jacocoTestReport/html").get().asFile
     }
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
@@ -115,6 +115,16 @@ tasks.register('jacocoTestReport', JacocoReport) {
     sourceDirectories.from = files(['src/main/java', 'src/main/kotlin'])
     classDirectories.from = files([kotlinDebugTree, javaDebugTree])
     executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
+
+    // Add a debug print to see where files are being generated
+    doLast {
+        println "JaCoCo XML report should be at: ${reports.xml.outputLocation}"
+        println "JaCoCo HTML report should be at: ${reports.html.outputLocation}"
+
+        // Check if the files actually exist
+        println "XML report exists: ${reports.xml.outputLocation.exists()}"
+        println "HTML report exists: ${reports.html.outputLocation.exists()}"
+    }
 }
 
 // Add coverage verification task
