@@ -46,6 +46,19 @@ jobs:
     - name: Run unit tests with coverage
       run: ./gradlew testDebugUnitTest jacocoTestReport
 
+    # Add debug step to see where the files are actually located
+    - name: Debug - List JaCoCo report directory contents
+      run: |
+        echo "Checking if jacoco directory exists:"
+        if [ -d "app/build/reports/jacoco" ]; then
+          echo "Directory exists, listing contents:"
+          find app/build/reports/jacoco -type f | sort
+        else
+          echo "Directory does not exist"
+          echo "Listing all reports directories:"
+          find app/build/reports -type d | sort
+        fi
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -59,7 +72,8 @@ jobs:
       if: always()
       with:
         name: coverage-report
-        path: app/build/reports/jacoco/jacocoTestReport/
+        path: |
+          app/build/reports/jacoco/**
         retention-days: 7
 
     - name: Verify minimum coverage thresholds

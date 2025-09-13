@@ -103,9 +103,8 @@ tasks.register('jacocoTestReport', JacocoReport) {
         xml.required = true
         html.required = true
 
-        // Specify the output directories for the reports
-        xml.outputLocation = layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.xml").get().asFile
-        html.outputLocation = layout.buildDirectory.dir("reports/jacoco/jacocoTestReport/html").get().asFile
+        // Simplify output locations to default patterns
+        // This is important for compatibility with GitHub Actions
     }
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
@@ -118,12 +117,12 @@ tasks.register('jacocoTestReport', JacocoReport) {
 
     // Add a debug print to see where files are being generated
     doLast {
-        println "JaCoCo XML report should be at: ${reports.xml.outputLocation}"
-        println "JaCoCo HTML report should be at: ${reports.html.outputLocation}"
+        println "JaCoCo XML report should be at: ${reports.xml.destination}"
+        println "JaCoCo HTML report should be at: ${reports.html.destination}"
 
         // Check if the files actually exist
-        println "XML report exists: ${reports.xml.outputLocation.exists()}"
-        println "HTML report exists: ${reports.html.outputLocation.exists()}"
+        println "XML report exists: ${reports.xml.destination.exists()}"
+        println "HTML report exists: ${reports.html.destination.exists()}"
     }
 }
 
