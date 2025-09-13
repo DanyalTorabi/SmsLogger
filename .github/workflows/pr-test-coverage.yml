@@ -42,7 +42,7 @@ jobs:
       run: chmod +x gradlew
 
     - name: Run unit tests with coverage
-      run: ./gradlew testDebugUnitTest jacocoTestReport
+      run: ./gradlew testDebugUnitTest jacocoTestReport --rerun-tasks
 
     - name: Debug - List JaCoCo report directory contents
       run: |

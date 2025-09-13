@@ -100,6 +100,9 @@ tasks.register('jacocoTestReport', JacocoReport) {
     // Fix the dependency - use the correct task path
     dependsOn('testDebugUnitTest')
 
+    // Force this task to always run and not be up-to-date
+    outputs.upToDateWhen { false }
+
     // Add output directory for JaCoCo exec file
     outputs.dir "${buildDir}/reports/jacoco"
 
