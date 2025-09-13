@@ -18,7 +18,7 @@ plugins {
     id("org.jetbrains.kotlin.android") version "1.9.22" apply false // Or your Kotlin version
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22" apply false // Add serialization plugin
     id("com.google.devtools.ksp") version "1.9.22-1.0.17" apply false // Make sure version is compatible
-    id("org.jacoco.core") version "0.8.11" // Add JaCoCo plugin
+    id("jacoco") version "0.8.11" apply false // Correct JaCoCo plugin ID
 }
 
 tasks.register('clean', Delete) {
