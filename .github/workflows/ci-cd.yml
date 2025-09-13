@@ -89,7 +89,6 @@ jobs:
 
   security-scan:
     runs-on: ubuntu-latest
-    if: false  # This is a cleaner way to disable a job
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -116,7 +115,6 @@ jobs:
 
   basic-validation:
     runs-on: ubuntu-latest
-    if: false  # This is a cleaner way to disable a job
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
