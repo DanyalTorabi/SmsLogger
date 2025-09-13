@@ -67,6 +67,37 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0") // For lifecycleScope
 
+// Add coverage verification task
+tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
+    group = "Verification"
+    description = "Verifies that the code meets minimum code coverage thresholds."
+
+    dependsOn('testDebugUnitTest')
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def kotlinDebugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def javaDebugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
+
+    classDirectories.from = files([kotlinDebugTree, javaDebugTree])
+    executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.70 // Start with 70% overall coverage minimum
+            }
+        }
+
+        rule {
+            element = 'CLASS'
+            includes = ['com.example.smslogger.*'] // Adjust package name as needed
+            limit {
+                minimum = 0.70 // 70% per class
+            }
+        }
+    }
+}
+
     // Testing Dependencies
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
