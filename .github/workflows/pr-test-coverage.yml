@@ -57,7 +57,7 @@ jobs:
       if: success() || failure()
       with:
         name: coverage-reports
-        path: app/build/reports/jacoco/
+        path: app/build/reports/jacoco/jacocoTestReport/
         retention-days: 7
 
     - name: Verify coverage thresholds

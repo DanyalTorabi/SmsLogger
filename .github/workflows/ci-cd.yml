@@ -59,7 +59,7 @@ jobs:
       if: always()
       with:
         name: coverage-report
-        path: app/build/reports/jacoco/
+        path: app/build/reports/jacoco/jacocoTestReport/
         retention-days: 7
 
     - name: Verify minimum coverage thresholds
