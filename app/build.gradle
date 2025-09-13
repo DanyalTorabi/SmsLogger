@@ -92,12 +92,16 @@ dependencies {
     androidTestImplementation 'io.mockk:mockk-android:1.13.8'
 }
 
-// Add JaCoCo test report task
+// Add JaCoCo test report task - Fixing the task registration to ensure it's not skipped
 tasks.register('jacocoTestReport', JacocoReport) {
     group = "Reporting"
     description = "Generate Jacoco coverage reports after running tests."
 
-    dependsOn('testDebugUnitTest')
+    // Make sure we only depend on the app module's test task, not the root project task
+    dependsOn('app:testDebugUnitTest')
+
+    // Add output directory for JaCoCo exec file
+    outputs.dir "${buildDir}/reports/jacoco"
 
     reports {
         xml.required = true
@@ -120,6 +124,11 @@ tasks.register('jacocoTestReport', JacocoReport) {
     doFirst {
         new File("${buildDir}/reports/jacoco").mkdirs()
         println "Created JaCoCo directory at: ${buildDir}/reports/jacoco"
+
+        // Check if the exec file exists
+        def execFile = file("${buildDir}/jacoco/testDebugUnitTest.exec")
+        println "Execution data file exists: ${execFile.exists()}"
+        println "Execution data file path: ${execFile.absolutePath}"
     }
 
     // Print debug info about created files
