@@ -44,7 +44,7 @@ jobs:
       run: ./gradlew lint
 
     - name: Run unit tests with coverage
-      run: ./gradlew testDebugUnitTest jacocoTestReport --rerun-tasks
+      run: ./gradlew testDebugUnitTest app:jacocoTestReport
 
     # Add debug step to see where the files are actually located
     - name: Debug - List JaCoCo report directory contents
