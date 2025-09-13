@@ -2,15 +2,16 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.serialization'
-    id("com.google.devtools.ksp")  // For Room annotation processing
+    id 'com.google.devtools.ksp'  // For Room annotation processing
+    id 'jacoco'  // Add JaCoCo plugin
 }
 
 android {
-    namespace 'com.example.smslogger' // CHANGE THIS
+    namespace 'com.example.smslogger'
     compileSdk 34 // Use the latest stable SDK
 
     defaultConfig {
-        applicationId "com.example.smslogger" // CHANGE THIS
+        applicationId "com.example.smslogger"
         minSdk 26 // Minimum SDK for runtime permissions
         targetSdk 34
         versionCode 1
@@ -20,6 +21,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            testCoverageEnabled true  // Enable coverage for debug builds
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -32,21 +36,25 @@ android {
     kotlinOptions {
         jvmTarget = '11'
     }
-    // If you use View Binding or Data Binding
-     buildFeatures {
-         viewBinding true // If you use ViewBinding in your Activity
-     }
+    buildFeatures {
+         viewBinding true
+    }
+}
+
+// Configure JaCoCo
+jacoco {
+    toolVersion = "0.8.8"
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.12.0' // Use latest
-    implementation 'androidx.appcompat:appcompat:1.6.1' // Use latest
-    implementation 'com.google.android.material:material:1.11.0' // Use latest
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation libs.androidx.room.runtime
     implementation libs.androidx.room.ktx
     implementation libs.androidx.lifecycle.viewmodel.ktx
-    implementation libs.androidx.lifecycle.livedata.ktx// Use latest
+    implementation libs.androidx.lifecycle.livedata.ktx
 
     // HTTP client for API calls
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
@@ -54,26 +62,34 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2'
 
     // Room Persistence Library
-    def room_version = "2.6.1" // Use the latest stable version
+    def room_version = "2.6.1"
     implementation "androidx.room:room-runtime:$room_version"
     ksp "androidx.room:room-compiler:$room_version"
-    implementation "androidx.room:room-ktx:$room_version" // For Kotlin Coroutines support
+    implementation "androidx.room:room-ktx:$room_version"
 
-//    // Coroutines
-//    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3' // Use latest
-
-    // Lifecycle components for observing LiveData (optional, but good practice)
+    // Lifecycle components
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0") // For lifecycleScope
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 
-// Add coverage verification task
-tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
-    group = "Verification"
-    description = "Verifies that the code meets minimum code coverage thresholds."
-// Configure JaCoCo
-jacoco {
-    toolVersion = "0.8.8"  // Specify JaCoCo version
+    // Testing Dependencies
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+    testImplementation 'androidx.arch.core:core-testing:2.2.0'
+    testImplementation 'androidx.room:room-testing:2.6.1'
+    testImplementation 'io.mockk:mockk:1.13.8'
+    testImplementation 'io.mockk:mockk-android:1.13.8'
+    testImplementation 'app.cash.turbine:turbine:1.0.0'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+    // Android Testing
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.room:room-testing:2.6.1'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'io.mockk:mockk-android:1.13.8'
 }
 
 // Add JaCoCo test report task
@@ -97,6 +113,10 @@ tasks.register('jacocoTestReport', JacocoReport) {
     executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
 }
 
+// Add coverage verification task
+tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
+    group = "Verification"
+    description = "Verifies that the code meets minimum code coverage thresholds."
 
     dependsOn('testDebugUnitTest')
 
@@ -122,24 +142,4 @@ tasks.register('jacocoTestReport', JacocoReport) {
             }
         }
     }
-}
-
-    // Testing Dependencies
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
-    testImplementation 'androidx.arch.core:core-testing:2.2.0'
-    testImplementation 'androidx.room:room-testing:2.6.1'
-    testImplementation 'io.mockk:mockk:1.13.8'
-    testImplementation 'io.mockk:mockk-android:1.13.8'
-    testImplementation 'app.cash.turbine:turbine:1.0.0'
-    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
-
-    // Android Testing
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    androidTestImplementation 'androidx.room:room-testing:2.6.1'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test:rules:1.5.0'
-    androidTestImplementation 'io.mockk:mockk-android:1.13.8'
 }
