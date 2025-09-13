@@ -97,8 +97,8 @@ tasks.register('jacocoTestReport', JacocoReport) {
     group = "Reporting"
     description = "Generate Jacoco coverage reports after running tests."
 
-    // Make sure we only depend on the app module's test task, not the root project task
-    dependsOn('app:testDebugUnitTest')
+    // Fix the dependency - use the correct task path
+    dependsOn('testDebugUnitTest')
 
     // Add output directory for JaCoCo exec file
     outputs.dir "${buildDir}/reports/jacoco"
