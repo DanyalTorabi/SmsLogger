@@ -103,8 +103,9 @@ tasks.register('jacocoTestReport', JacocoReport) {
         xml.required = true
         html.required = true
 
-        // Simplify output locations to default patterns
-        // This is important for compatibility with GitHub Actions
+        // Explicitly set output locations
+        xml.destination = file("${buildDir}/reports/jacoco/jacocoTestReport.xml")
+        html.destination = file("${buildDir}/reports/jacoco/html")
     }
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
@@ -115,7 +116,13 @@ tasks.register('jacocoTestReport', JacocoReport) {
     classDirectories.from = files([kotlinDebugTree, javaDebugTree])
     executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
 
-    // Add a debug print to see where files are being generated
+    // Create directory if it doesn't exist
+    doFirst {
+        new File("${buildDir}/reports/jacoco").mkdirs()
+        println "Created JaCoCo directory at: ${buildDir}/reports/jacoco"
+    }
+
+    // Print debug info about created files
     doLast {
         println "JaCoCo XML report should be at: ${reports.xml.destination}"
         println "JaCoCo HTML report should be at: ${reports.html.destination}"
@@ -123,6 +130,17 @@ tasks.register('jacocoTestReport', JacocoReport) {
         // Check if the files actually exist
         println "XML report exists: ${reports.xml.destination.exists()}"
         println "HTML report exists: ${reports.html.destination.exists()}"
+
+        // List all files in the jacoco directory
+        def jacocoDir = new File("${buildDir}/reports/jacoco")
+        if (jacocoDir.exists()) {
+            println "Files in jacoco directory:"
+            jacocoDir.listFiles().each { file ->
+                println " - ${file.name}"
+            }
+        } else {
+            println "Jacoco directory still doesn't exist after task execution!"
+        }
     }
 }
 
