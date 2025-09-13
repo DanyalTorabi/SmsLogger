@@ -4,6 +4,13 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Add permissions needed for check runs and comments
+permissions:
+  checks: write
+  contents: read
+  issues: read
+  pull-requests: write
+
 jobs:
   unit-tests-with-coverage:
     name: Run Unit Tests with Coverage
@@ -56,11 +63,15 @@ jobs:
     - name: Verify coverage thresholds
       run: ./gradlew jacocoTestCoverageVerification
 
+    # Replace EnricoMi action with dorny/test-reporter which works better with GitHub permissions
     - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
+      uses: dorny/test-reporter@v1
       if: always()
       with:
-        files: app/build/test-results/**/*.xml
+        name: JUnit Test Results
+        path: app/build/test-results/testDebugUnitTest/*.xml
+        reporter: java-junit
+        fail-on-error: false
 
     - name: Report coverage to PR
       uses: madrapps/jacoco-report@v1.6.1
