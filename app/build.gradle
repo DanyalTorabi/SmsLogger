@@ -71,6 +71,32 @@ dependencies {
 tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
     group = "Verification"
     description = "Verifies that the code meets minimum code coverage thresholds."
+// Configure JaCoCo
+jacoco {
+    toolVersion = "0.8.8"  // Specify JaCoCo version
+}
+
+// Add JaCoCo test report task
+tasks.register('jacocoTestReport', JacocoReport) {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+
+    dependsOn('testDebugUnitTest')
+
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def kotlinDebugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def javaDebugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
+
+    sourceDirectories.from = files(['src/main/java', 'src/main/kotlin'])
+    classDirectories.from = files([kotlinDebugTree, javaDebugTree])
+    executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
+}
+
 
     dependsOn('testDebugUnitTest')
 
