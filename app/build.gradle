@@ -138,12 +138,15 @@ tasks.register('jacocoTestReport', JacocoReport) {
 
     // Print debug info about created files
     doLast {
-        println "JaCoCo XML report should be at: ${reports.xml.destination}"
-        println "JaCoCo HTML report should be at: ${reports.html.destination}"
+        def xmlReport = file("${buildDir}/reports/jacoco/jacocoTestReport.xml")
+        def htmlReport = file("${buildDir}/reports/jacoco/html")
+
+        println "JaCoCo XML report location: ${xmlReport}"
+        println "JaCoCo HTML report location: ${htmlReport}"
 
         // Check if the files actually exist
-        println "XML report exists: ${reports.xml.destination.exists()}"
-        println "HTML report exists: ${reports.html.destination.exists()}"
+        println "XML report exists: ${xmlReport.exists()}"
+        println "HTML report exists: ${htmlReport.exists()}"
 
         // List all files in the jacoco directory
         def jacocoDir = new File("${buildDir}/reports/jacoco")
