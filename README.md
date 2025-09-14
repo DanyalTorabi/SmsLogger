@@ -155,6 +155,8 @@ We follow a structured branching strategy to ensure clean development and safe r
 - **`hotfix/*`** - Critical production fixes
 - **`release/*`** - Release preparation branches
 - **`devops/*`** - Infrastructure and tooling changes
+- **`docs/*`** - Documentation updates (short form)
+- **`documentation/*`** - Documentation updates (long form)
 
 #### Branch Naming Examples
 - `feature/sms-backup-restore`
@@ -162,10 +164,10 @@ We follow a structured branching strategy to ensure clean development and safe r
 - `hotfix/service-crash-android-14`
 - `release/v1.3.0`
 - `devops/github-actions-ci`
+- `docs/api-updates`
+- `documentation/readme-coverage-badge`
 
-For complete workflow details, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-### Key Files
+#### Key Files
 - `MainActivity.kt`: Main UI and permission handling
 - `SmsLoggingService.kt`: Core background service with SMS processing
 - `SmsReceiver.kt`: Broadcast receiver for incoming SMS
