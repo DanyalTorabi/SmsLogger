@@ -23,3 +23,12 @@ plugins {
 tasks.register('clean', Delete) {
     delete rootProject.buildDir
 }
+
+// Add JaCoCo test report task at the root level
+tasks.register('jacocoTestReport') {
+    group = 'Reporting'
+    description = 'Generate Jacoco coverage reports after running tests.'
+
+    // This is just a placeholder task that depends on the app module's jacocoTestReport task
+    // The actual implementation will be in the app module
+}

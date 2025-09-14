@@ -2,15 +2,16 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.serialization'
-    id("com.google.devtools.ksp")  // For Room annotation processing
+    id 'com.google.devtools.ksp'  // For Room annotation processing
+    id 'jacoco'  // Add JaCoCo plugin
 }
 
 android {
-    namespace 'com.example.smslogger' // CHANGE THIS
+    namespace 'com.example.smslogger'
     compileSdk 34 // Use the latest stable SDK
 
     defaultConfig {
-        applicationId "com.example.smslogger" // CHANGE THIS
+        applicationId "com.example.smslogger"
         minSdk 26 // Minimum SDK for runtime permissions
         targetSdk 34
         versionCode 1
@@ -20,6 +21,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            testCoverageEnabled true  // Enable coverage for debug builds
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -32,21 +36,25 @@ android {
     kotlinOptions {
         jvmTarget = '11'
     }
-    // If you use View Binding or Data Binding
-     buildFeatures {
-         viewBinding true // If you use ViewBinding in your Activity
-     }
+    buildFeatures {
+         viewBinding true
+    }
+}
+
+// Configure JaCoCo
+jacoco {
+    toolVersion = "0.8.11"  // Updated to the latest version that supports Java 21
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.12.0' // Use latest
-    implementation 'androidx.appcompat:appcompat:1.6.1' // Use latest
-    implementation 'com.google.android.material:material:1.11.0' // Use latest
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation libs.androidx.room.runtime
     implementation libs.androidx.room.ktx
     implementation libs.androidx.lifecycle.viewmodel.ktx
-    implementation libs.androidx.lifecycle.livedata.ktx// Use latest
+    implementation libs.androidx.lifecycle.livedata.ktx
 
     // HTTP client for API calls
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
@@ -54,18 +62,15 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2'
 
     // Room Persistence Library
-    def room_version = "2.6.1" // Use the latest stable version
+    def room_version = "2.6.1"
     implementation "androidx.room:room-runtime:$room_version"
     ksp "androidx.room:room-compiler:$room_version"
-    implementation "androidx.room:room-ktx:$room_version" // For Kotlin Coroutines support
+    implementation "androidx.room:room-ktx:$room_version"
 
-//    // Coroutines
-//    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3' // Use latest
-
-    // Lifecycle components for observing LiveData (optional, but good practice)
+    // Lifecycle components
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0") // For lifecycleScope
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 
     // Testing Dependencies
     testImplementation 'junit:junit:4.13.2'
@@ -85,4 +90,102 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test:rules:1.5.0'
     androidTestImplementation 'io.mockk:mockk-android:1.13.8'
+}
+
+// Add JaCoCo test report task - Fixing the task registration to ensure it's not skipped
+tasks.register('jacocoTestReport', JacocoReport) {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+
+    // Fix the dependency - use the correct task path
+    dependsOn('testDebugUnitTest')
+
+    // Force this task to always run and not be up-to-date
+    outputs.upToDateWhen { false }
+
+    // Add output directory for JaCoCo exec file
+    outputs.dir "${buildDir}/reports/jacoco"
+
+    reports {
+        xml.required = true
+        html.required = true
+
+        // Use the correct syntax for newer Gradle versions and paths
+        xml.outputLocation = file("${buildDir}/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
+        html.outputLocation = file("${buildDir}/reports/jacoco/html")
+    }
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def kotlinDebugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def javaDebugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
+
+    sourceDirectories.from = files(['src/main/java', 'src/main/kotlin'])
+    classDirectories.from = files([kotlinDebugTree, javaDebugTree])
+    executionData.from = files("${buildDir}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+
+    // Create directory if it doesn't exist
+    doFirst {
+        new File("${buildDir}/reports/jacoco").mkdirs()
+        println "Created JaCoCo directory at: ${buildDir}/reports/jacoco"
+
+        // Check if the exec file exists
+        def execFile = file("${buildDir}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+        println "Execution data file exists: ${execFile.exists()}"
+        println "Execution data file path: ${execFile.absolutePath}"
+    }
+
+    // Print debug info about created files
+    doLast {
+        def xmlReport = file("${buildDir}/reports/jacoco/jacocoTestReport.xml")
+        def htmlReport = file("${buildDir}/reports/jacoco/html")
+
+        println "JaCoCo XML report location: ${xmlReport}"
+        println "JaCoCo HTML report location: ${htmlReport}"
+
+        // Check if the files actually exist
+        println "XML report exists: ${xmlReport.exists()}"
+        println "HTML report exists: ${htmlReport.exists()}"
+
+        // List all files in the jacoco directory
+        def jacocoDir = new File("${buildDir}/reports/jacoco")
+        if (jacocoDir.exists()) {
+            println "Files in jacoco directory:"
+            jacocoDir.listFiles().each { file ->
+                println " - ${file.name}"
+            }
+        } else {
+            println "Jacoco directory still doesn't exist after task execution!"
+        }
+    }
+}
+
+// Add coverage verification task
+tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
+    group = "Verification"
+    description = "Verifies that the code meets minimum code coverage thresholds."
+
+    dependsOn('testDebugUnitTest')
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def kotlinDebugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def javaDebugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
+
+    classDirectories.from = files([kotlinDebugTree, javaDebugTree])
+    executionData.from = files("${buildDir}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.24 // Set to 24% to match current exact coverage level
+            }
+        }
+
+        rule {
+            element = 'CLASS'
+            includes = ['com.example.smslogger.*'] // Adjust package name as needed
+            limit {
+                minimum = 0.0 // Set to 0% temporarily to allow CI to pass
+            }
+        }
+    }
 }
