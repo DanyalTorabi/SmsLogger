@@ -100,6 +100,21 @@ cd SmsLogger
 
 ## Development
 
+### Code Coverage & Quality
+
+The project uses JaCoCo for code coverage analysis. Current coverage is at 24%, with a goal to increase this over time.
+
+To run coverage analysis locally:
+```bash
+./gradlew jacocoTestReport
+```
+
+The HTML coverage report will be generated at: `app/build/reports/jacoco/html/index.html`
+
+We maintain minimum coverage thresholds to ensure code quality:
+- Current minimum threshold: 24%
+- Target threshold: 80%
+
 ### Development Workflow
 
 We follow a structured branching strategy to ensure clean development and safe releases. Please read our [Contributing Guidelines](CONTRIBUTING.md) for detailed information.
