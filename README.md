@@ -1,5 +1,7 @@
 # SMS Logger
 
+[![Code Coverage](https://img.shields.io/badge/Coverage-24%25-yellow.svg)](app/build/reports/jacoco/html/index.html)
+
 A robust Android application that monitors, logs, and tracks all SMS messages on your device in real-time. This app runs as a background service and maintains a comprehensive database of all incoming and outgoing SMS messages with detailed metadata.
 
 ## Features
