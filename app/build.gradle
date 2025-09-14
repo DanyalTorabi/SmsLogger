@@ -110,10 +110,8 @@ tasks.register('jacocoTestReport', JacocoReport) {
         xml.required = true
         html.required = true
 
-        // Use the correct syntax for newer Gradle versions
-        xml.outputLocation = file("${buildDir}/reports/jacoco/jacocoTestReport.xml")
-        html.outputLocation = file("${buildDir}/reports/jacoco/html")
-        xml.outputLocation = file("${buildDir}/reports/jacoco/jacocoTestReport.xml")
+        // Use the correct syntax for newer Gradle versions and paths
+        xml.outputLocation = file("${buildDir}/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
         html.outputLocation = file("${buildDir}/reports/jacoco/html")
     }
 
