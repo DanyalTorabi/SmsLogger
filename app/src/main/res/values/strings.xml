@@ -2,4 +2,30 @@
     <string name="app_name">SmsLogger</string>
     <string name="start_sms_logging_service">Start SMS Logging Service</string>
     <string name="log_all_db_sms_to_logcat">Log All DB SMS to Logcat</string>
+
+    <!-- Authentication -->
+    <string name="login_title">Sign In</string>
+    <string name="username_label">Username</string>
+    <string name="username_hint">Enter your username</string>
+    <string name="password_label">Password</string>
+    <string name="password_hint">Enter your password</string>
+    <string name="login_button">Login</string>
+    <string name="remember_me">Remember me</string>
+    <string name="logging_in">Logging in…</string>
+
+    <!-- Error Messages -->
+    <string name="error_username_required">Username is required</string>
+    <string name="error_password_required">Password is required</string>
+    <string name="error_password_too_short">Password must be at least 6 characters</string>
+    <string name="error_invalid_credentials">Invalid username or password</string>
+    <string name="error_network">Cannot connect to server. Check your network connection.</string>
+    <string name="error_server_unavailable">Server temporarily unavailable. Please try again later.</string>
+    <string name="error_timeout">Connection timeout. Please try again.</string>
+    <string name="error_unknown">An error occurred. Please try again.</string>
+
+    <!-- Accessibility -->
+    <string name="content_desc_username_field">Username input field</string>
+    <string name="content_desc_password_field">Password input field</string>
+    <string name="content_desc_login_button">Login button</string>
+    <string name="content_desc_toggle_password_visibility">Toggle password visibility</string>
 </resources>
