@@ -9,6 +9,7 @@
 /.idea/assetWizardSettings.xml
 /.idea/copilot*
 /.idea/copilotDiffState.xml
+/.idea/deploymentTargetSelector.xml
 .DS_Store
 /build
 /captures
