@@ -40,6 +40,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Login Activity for authentication -->
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmsLogger"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- SMS Logging Service -->
         <service
             android:name=".service.SmsLoggingService"

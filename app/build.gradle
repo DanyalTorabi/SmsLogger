@@ -48,6 +48,13 @@ dependencies {
     implementation libs.androidx.lifecycle.viewmodel.ktx
     implementation libs.androidx.lifecycle.livedata.ktx// Use latest
 
+    // Security - Encrypted storage for credentials
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+
+    // Activity and Fragment KTX for ViewModel support
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+
     // HTTP client for API calls
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'

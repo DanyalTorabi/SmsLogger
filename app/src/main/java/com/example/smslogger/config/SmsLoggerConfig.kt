@@ -18,10 +18,26 @@ class SmsLoggerConfig private constructor(context: Context) {
         get() = prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL) ?: DEFAULT_SERVER_URL
         set(value) = prefs.edit { putString(KEY_SERVER_URL, value) }
 
+    /**
+     * @deprecated Use KeystoreCredentialManager for secure credential storage
+     * This property is kept for backward compatibility only
+     */
+    @Deprecated(
+        message = "Use KeystoreCredentialManager.getInstance(context).getUsername() instead",
+        replaceWith = ReplaceWith("KeystoreCredentialManager.getInstance(context).getUsername()")
+    )
     var username: String
         get() = prefs.getString(KEY_USERNAME, "") ?: ""
         set(value) = prefs.edit { putString(KEY_USERNAME, value) }
 
+    /**
+     * @deprecated Use KeystoreCredentialManager for secure credential storage
+     * This property is kept for backward compatibility only
+     */
+    @Deprecated(
+        message = "Use KeystoreCredentialManager.getInstance(context).getPassword() instead",
+        replaceWith = ReplaceWith("KeystoreCredentialManager.getInstance(context).getPassword()")
+    )
     var password: String
         get() = prefs.getString(KEY_PASSWORD, "") ?: ""
         set(value) = prefs.edit { putString(KEY_PASSWORD, value) }

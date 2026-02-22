@@ -105,18 +105,22 @@ and more predictable behavior in background services.
 
 ### Branch Naming Convention
 
-Use descriptive branch names with prefixes:
+Use descriptive branch names with prefixes and TICKET NUMBERS:
 
 ```
-<type>/<issue-number>-<short-description>
+<type>/<ticket-number>-<short-description>
 ```
 
 **Examples:**
-- `feat/45-add-export-functionality`
+- `feat/45-login-screen-ui`
+- `feat/46-secure-credential-storage`
+- `feat/45-46-login-and-secure-storage` (for related tickets in same PR)
 - `fix/38-null-sms-body-crash`
 - `docs/37-enhance-copilot-instructions`
 - `refactor/50-migrate-to-hilt`
 - `chore/52-update-dependencies`
+
+**IMPORTANT**: Branch name MUST include the ticket number(s) it implements.
 
 ### General Git Guidelines
 
@@ -127,6 +131,103 @@ Use descriptive branch names with prefixes:
 5. **Pull before push**: Always pull latest changes before pushing
 6. **Don't commit secrets**: Never commit API keys, tokens, or sensitive data
 7. **Use .gitignore**: Keep build artifacts and local config out of repo
+
+### Copilot Implementation Workflow
+
+When implementing features or fixes, Copilot MUST follow this workflow:
+
+**⚠️ CRITICAL RULES:**
+1. **DO NOT** just create scripts or documentation of what should be done
+2. **DO** actually execute all git commands in sequence
+3. **DO** create the PR and push it to GitHub
+4. The user expects the work to be DONE, not just documented
+
+**Step-by-step execution:**
+
+1. **Create a fresh branch from main**
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b <type>/<ticket-number>-<short-description>
+   ```
+   
+   Example for tickets #45 and #46:
+   ```bash
+   git checkout -b feat/45-46-login-and-secure-storage
+   ```
+
+2. **Make code changes**
+   - Implement the feature/fix
+   - Follow all coding standards and conventions
+   - Ensure code compiles without errors
+
+3. **Commit changes**
+   ```bash
+   git add <files>
+   git commit -m "<conventional commit message>"
+   ```
+   
+   The commit message MUST:
+   - Follow conventional commits format
+   - Include which tickets it closes (Closes #45, Closes #46)
+   - Reference server issues if applicable
+   - Include a summary of what was changed
+
+4. **Push to remote**
+   ```bash
+   git push -u origin <branch-name>
+   ```
+
+5. **Create Pull Request**
+   ```bash
+   gh pr create --title "<title>" --body "<description>"
+   ```
+   
+   Example:
+   ```bash
+   gh pr create \
+     --title "feat(auth): implement login screen UI and secure credential storage (#45, #46)" \
+     --body-file PR_45_46_IMPLEMENTATION.md
+   ```
+
+**FAILURE CASES - What to do if commands fail:**
+- If branch exists: `git branch -D <branch-name>` then create again
+- If push fails: Check if remote branch exists, use `git push -f` if needed
+- If gh CLI not available: Create PR manually via GitHub web UI
+
+**VERIFICATION - After execution:**
+1. ✅ Branch exists and is pushed to GitHub
+2. ✅ Commit is visible in the branch history
+3. ✅ PR is created and visible on GitHub
+4. ✅ PR title follows conventional commits
+5. ✅ PR body has complete description
+6. ✅ All files are included in the PR
+7. ✅ Linked issues are referenced (Closes #X)
+
+### File Creation Guidelines
+
+When implementing features or fixes, Copilot MUST follow these rules:
+
+**DO NOT CREATE:**
+- ❌ Temporary helper files (.commit_message.txt, etc.)
+- ❌ Temporary documentation files that duplicate other docs
+- ❌ Helper scripts that aren't part of the project
+- ❌ Files that are just for reference or explanation
+- ❌ Multiple versions of the same documentation
+
+**ONLY CREATE:**
+- ✅ Code files that are part of the actual implementation
+- ✅ Essential configuration files
+- ✅ Documentation that will be maintained long-term
+- ✅ Tests and supporting code
+
+**EXAMPLES OF FILES TO NEVER CREATE:**
+- ❌ GIT_WORKFLOW_COMMANDS.md (duplicate of instructions)
+- ❌ PR_CREATION_CONFIRMATION.md (temporary confirmation)
+- ❌ CLEANUP_SUMMARY.md (temporary reference)
+- ❌ IMPLEMENTATION_SUMMARY.md (info already in PR)
+- ❌ commit_and_push.sh (helper script)
+- ❌ .commit_message.txt (temporary file)
 
 ### GitHub Labels
 
