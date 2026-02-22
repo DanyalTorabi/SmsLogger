@@ -32,23 +32,14 @@ data class AuthRequest(
 
 /**
  * Authentication response containing JWT token and user info
-<<<<<<< HEAD
  * Fields are optional to support servers returning minimal responses (just token)
-=======
- * Updated to match server API from sms-syncer-server#60
->>>>>>> 0abeef4 (feat(auth): add missing implementation files for login screen and secure storage (#45, #46))
  */
 @Serializable
 data class AuthResponse(
     val token: String,
     val refreshToken: String? = null,
-<<<<<<< HEAD
     val expiresIn: Long? = null,  // Token validity duration in seconds (optional)
     val user: UserInfo? = null
-=======
-    val expiresIn: Long,  // Token validity duration in seconds
-    val user: UserInfo
->>>>>>> 0abeef4 (feat(auth): add missing implementation files for login screen and secure storage (#45, #46))
 )
 
 /**
