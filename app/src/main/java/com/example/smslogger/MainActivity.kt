@@ -8,21 +8,38 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.example.smslogger.security.KeystoreCredentialManager
 import com.example.smslogger.service.SmsLoggingService
 import com.example.smslogger.service.SmsSyncService
+import com.example.smslogger.ui.auth.LoginActivity
 
 /**
- * Headless SMS Logger - No UI required
- * This activity automatically starts services and finishes immediately
+ * Main Activity - Entry point of the app
+ * Checks authentication status and redirects to login if needed
+ *
+ * Updated for Epic #44 - Authentication System
  */
 class MainActivity : AppCompatActivity() {
 
     private val TAG = "MainActivity"
+    private lateinit var credentialManager: KeystoreCredentialManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d(TAG, "SMS Logger starting in headless mode...")
+        Log.d(TAG, "MainActivity starting...")
+
+        // Initialize credential manager
+        credentialManager = KeystoreCredentialManager.getInstance(this)
+
+        // Check authentication status
+        if (!credentialManager.isAuthenticated()) {
+            Log.d(TAG, "User not authenticated, redirecting to login...")
+            navigateToLogin()
+            return
+        }
+
+        Log.d(TAG, "User authenticated, proceeding with service startup")
 
         // Check permissions and start services automatically
         if (arePermissionsGranted()) {
@@ -34,6 +51,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Finish activity immediately - no UI needed
+        finish()
+    }
+
+    /**
+     * Navigate to login screen
+     */
+    private fun navigateToLogin() {
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
         finish()
     }
 
