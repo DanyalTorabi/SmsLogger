@@ -3,12 +3,52 @@
 This document provides guidelines and conventions for GitHub Copilot when assisting with the SMS Logger Android project.
 
 ## Table of Contents
+- [Getting Started with a Ticket](#getting-started-with-a-ticket)
 - [Project Overview](#project-overview)
 - [Git Conventions](#git-conventions)
 - [Code Style Guidelines](#code-style-guidelines)
 - [Pre-Commit Checklist](#pre-commit-checklist)
 - [Code Review Checklist](#code-review-checklist)
 - [Architecture Guidelines](#architecture-guidelines)
+
+## Getting Started with a Ticket
+
+**⚠️ MANDATORY FIRST STEP FOR ANY TASK:**
+
+Before starting ANY implementation, feature, or fix, Copilot MUST:
+
+1. **Read this document first** - Ensure all guidelines are understood
+2. **Retrieve ticket details from GitHub Issues** - Use one of these methods:
+   ```bash
+   # Method 1: GitHub CLI
+   gh issue view <ticket-number>
+   
+   # Method 2: If CLI not available, ask the user to provide:
+   # - Ticket title
+   # - Description
+   # - Acceptance criteria
+   # - Related links
+   ```
+
+3. **Understand the ticket before starting**:
+   - What is the problem/feature request?
+   - What are the acceptance criteria?
+   - Are there related tickets?
+   - What component(s) are affected?
+   - Are there any dependencies or blockers?
+
+4. **NEVER assume ticket details** - If a ticket number is provided without details:
+   - Always attempt to fetch it from GitHub Issues
+   - If fetch fails or details are unclear, ask the user to provide them
+   - Do NOT proceed without understanding what needs to be done
+
+5. **Create an implementation plan** before writing code:
+   - Break down the work into concrete tasks
+   - Identify files that need changes
+   - Plan database migrations if needed
+   - Verify no conflicts with existing code
+
+**This step prevents wasted time and ensures correct implementation.**
 
 ## Project Overview
 
@@ -220,6 +260,13 @@ When implementing features or fixes, Copilot MUST follow these rules:
 - ✅ Essential configuration files
 - ✅ Documentation that will be maintained long-term
 - ✅ Tests and supporting code
+
+**TEMPORARY FILES LOCATION:**
+- ⚠️ If you absolutely MUST create a temporary file for any reason, create it OUTSIDE the project folder
+- ✅ Use: `../temp/` directory (one level up from project root)
+- ✅ Example: `/home/danto/AndroidStudioProjects/temp/issue_47_notes.txt`
+- ❌ NEVER create temporary files inside the project directory
+- ❌ This prevents accidental commits of temporary files
 
 **EXAMPLES OF FILES TO NEVER CREATE:**
 - ❌ GIT_WORKFLOW_COMMANDS.md (duplicate of instructions)
