@@ -48,6 +48,16 @@ Before starting ANY implementation, feature, or fix, Copilot MUST:
    - Plan database migrations if needed
    - Verify no conflicts with existing code
 
+6. **Checkout a fresh branch from latest main** before writing any code:
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b <type>/<ticket-number>-<short-description>
+   ```
+   - Always start from the latest `main` to avoid conflicts
+   - NEVER work directly on `main`
+   - NEVER start from an outdated or existing feature branch
+
 **This step prevents wasted time and ensures correct implementation.**
 
 ## Project Overview
@@ -275,6 +285,46 @@ When implementing features or fixes, Copilot MUST follow these rules:
 - ❌ IMPLEMENTATION_SUMMARY.md (info already in PR)
 - ❌ commit_and_push.sh (helper script)
 - ❌ .commit_message.txt (temporary file)
+
+### Deferred Work Must Have a Ticket
+
+**⚠️ MANDATORY RULE: Nothing is silently postponed.**
+
+Whenever Copilot decides to defer, skip, or postpone any piece of work during an implementation (e.g. "we'll do this in a follow-up"), it MUST immediately:
+
+1. **Create a new GitHub Issue** for the deferred work, OR
+2. **Add a comment to an existing related issue** describing what was deferred and why
+
+**Creating a follow-up ticket:**
+```bash
+gh issue create \
+  --title "<type>: <short description of deferred work>" \
+  --body "Deferred from #<original-ticket>: <explanation of what was skipped and why>" \
+  --label "enhancement"
+```
+
+**Commenting on an existing ticket:**
+```bash
+gh issue comment <issue-number> \
+  --body "Deferred from #<original-ticket>: <explanation of what was skipped and why>"
+```
+
+**Rules:**
+- ✅ ALWAYS create or update a ticket before finishing the current implementation
+- ✅ Reference the deferred ticket number in the PR description and commit message
+- ✅ Use `Relates to #X` in the commit/PR body to link the tickets
+- ❌ NEVER say "we'll handle this later" without creating a ticket to track it
+- ❌ NEVER leave deferred work undocumented
+
+**Example:**
+> During ticket #63 (CI setup), instrumentation tests were deferred.
+> A new ticket must be created immediately:
+> ```bash
+> gh issue create \
+>   --title "ci: add instrumentation test job to GitHub Actions" \
+>   --body "Deferred from #63: instrumentation tests skipped in initial CI setup. Add emulator-based job using reactivecircus/android-emulator-runner@v2 with api-level: 35." \
+>   --label "testing,devops"
+> ```
 
 ### GitHub Labels
 
@@ -643,4 +693,3 @@ com.example.smslogger/
 
 **Last Updated**: February 15, 2026  
 **Version**: 1.0
-

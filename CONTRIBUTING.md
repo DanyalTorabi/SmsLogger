@@ -186,6 +186,30 @@ Use the appropriate issue template and include:
 
 ## Development Tips
 
+### Running CI Locally
+
+Every CI job in GitHub Actions maps 1:1 to a local command. Use `make` targets for convenience or run `./gradlew` directly — they are identical.
+
+| CI Job | `make` target | Raw Gradle command |
+|---|---|---|
+| Lint | `make lint` | `./gradlew lint` |
+| Unit Tests | `make test` | `./gradlew test` |
+| Debug Build | `make build` | `./gradlew assembleDebug` |
+| Full CI | `make ci` | `./gradlew lint test assembleDebug` |
+| Clean | `make clean` | `./gradlew clean` |
+
+**Toolchain versions (must match CI):**
+- Gradle: `8.13` (via wrapper — no separate install needed)
+- AGP: `8.9.1`
+- Kotlin: `2.0.21`
+- JDK: `11` (Temurin)
+- compileSdk: `35`
+
+**Run the full CI pipeline locally before pushing:**
+```bash
+make ci
+```
+
 ### Useful Gradle Commands
 
 ```bash
@@ -266,4 +290,3 @@ If you have questions not covered in this guide, please:
 3. Create a new issue with the "question" label
 
 Thank you for contributing to SMS Logger! 🎉
-
