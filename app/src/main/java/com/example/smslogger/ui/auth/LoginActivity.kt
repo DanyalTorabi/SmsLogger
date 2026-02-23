@@ -15,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.smslogger.MainActivity
 import com.example.smslogger.R
 import com.example.smslogger.config.SmsLoggerConfig
+import com.example.smslogger.data.repository.AuthRepository
 import com.example.smslogger.databinding.ActivityLoginBinding
 import com.example.smslogger.security.KeystoreCredentialManager
 import kotlinx.coroutines.launch
@@ -49,9 +50,12 @@ class LoginActivity : AppCompatActivity() {
         // Initialize config
         config = SmsLoggerConfig.getInstance(this)
 
-        // Initialize ViewModel
+        // Initialize dependencies
         val credentialManager = KeystoreCredentialManager.getInstance(this)
-        val factory = AuthViewModelFactory(credentialManager, config.serverUrl)
+        val authRepository = AuthRepository(credentialManager, config.serverUrl)
+
+        // Initialize ViewModel
+        val factory = AuthViewModelFactory(authRepository)
         viewModel = ViewModelProvider(this, factory)[AuthViewModel::class.java]
 
         // Setup UI
@@ -151,7 +155,12 @@ class LoginActivity : AppCompatActivity() {
         currentFocus?.clearFocus()
 
         // Attempt login via ViewModel
-        viewModel.login(username, password, rememberMe)
+        viewModel.login(
+            username = username,
+            password = password,
+            totpCode = null,  // TOTP support for future 2FA implementation
+            rememberMe = rememberMe
+        )
     }
 
     /**
@@ -238,13 +247,12 @@ class LoginActivity : AppCompatActivity() {
      * ViewModel Factory for dependency injection
      */
     class AuthViewModelFactory(
-        private val credentialManager: KeystoreCredentialManager,
-        private val serverUrl: String
+        private val authRepository: AuthRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
-                return AuthViewModel(credentialManager, serverUrl) as T
+                return AuthViewModel(authRepository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
