@@ -1,5 +1,7 @@
 # SMS Logger
 
+[![CI](https://github.com/DanyalTorabi/SmsLogger/actions/workflows/ci.yml/badge.svg)](https://github.com/DanyalTorabi/SmsLogger/actions/workflows/ci.yml)
+
 A robust Android application that monitors, logs, and tracks all SMS messages on your device in real-time. This app runs as a background service and maintains a comprehensive database of all incoming and outgoing SMS messages with detailed metadata.
 
 ## Features
