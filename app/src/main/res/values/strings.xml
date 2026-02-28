@@ -36,6 +36,40 @@
     <string name="totp_help_text">Enter code from Google Authenticator if you have 2FA enabled</string>
     <string name="error_totp_invalid">2FA code must be exactly 6 digits</string>
 
+    <!-- Error messages - account lockout / inactive (#55) -->
+    <string name="error_account_locked">Your account is locked due to multiple failed login attempts. Please try again in 30 minutes.</string>
+    <string name="error_account_inactive">Your account has been deactivated. Please contact administrator.</string>
+    <string name="error_invalid_totp">Invalid 2FA code. Please try again.</string>
+    <string name="error_totp_required">Two-factor authentication code required.</string>
+
+    <!-- Sync auth failure notification (#53) -->
+    <string name="error_sync_auth_failed">Sync paused — please log in again</string>
+
+    <!-- Settings screen (#54) -->
+    <string name="settings_title">Settings</string>
+    <string name="pref_category_account">Account</string>
+    <string name="pref_username_title">Logged in as</string>
+    <string name="pref_username_summary_placeholder">Not logged in</string>
+    <string name="pref_logout_title">Logout</string>
+    <string name="pref_logout_summary">Sign out and clear all data</string>
+    <string name="pref_category_sync">Sync</string>
+    <string name="pref_last_sync_title">Last sync</string>
+    <string name="pref_last_sync_never">Never</string>
+    <string name="pref_sync_now_title">Sync now</string>
+    <string name="pref_sync_now_summary">Manually trigger SMS sync to server</string>
+    <string name="pref_sync_now_started">Sync started…</string>
+    <string name="pref_category_about">About</string>
+    <string name="pref_app_version_title">App version</string>
+    <string name="pref_server_url_title">Server URL</string>
+    <string name="pref_2fa_title">Manage 2FA</string>
+    <string name="pref_2fa_summary">Two-factor authentication is managed on the server. Contact your administrator or visit the server admin panel to enable or disable 2FA for your account.</string>
+
+    <!-- Logout confirmation dialog (#54) -->
+    <string name="logout_dialog_title">Logout</string>
+    <string name="logout_dialog_message">Are you sure you want to logout? All local session data will be cleared.</string>
+    <string name="logout_dialog_confirm">Logout</string>
+    <string name="logout_dialog_cancel">Cancel</string>
+
     <!-- Accessibility -->
     <string name="content_desc_username_field">Username input field</string>
     <string name="content_desc_password_field">Password input field</string>
