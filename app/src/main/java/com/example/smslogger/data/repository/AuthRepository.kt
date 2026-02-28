@@ -1,30 +1,30 @@
 package com.example.smslogger.data.repository
 
+import android.content.Context
 import android.util.Log
 import com.example.smslogger.api.SmsApiClient
 import com.example.smslogger.api.UserInfo
 import com.example.smslogger.security.KeystoreCredentialManager
+import com.example.smslogger.security.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Repository for authentication operations
- * Abstracts API calls and credential management for AuthViewModel
+ * Repository for authentication operations.
  *
- * Responsibilities:
- * - Authenticate users with server
- * - Manage credential storage via KeystoreCredentialManager
- * - Handle server error responses
- * - Provide clean API for ViewModel layer
+ * Updated for #48: schedules [TokenExpiryWorker] after login and uses [SessionManager]
+ * for logout so the broadcast and worker cancellation happen atomically.
  *
- * Dependencies: #46 (KeystoreCredentialManager), #49/#50 (API models)
+ * Dependencies: #46 (KeystoreCredentialManager), #48 (SessionManager), #49/#50 (API models)
  */
 class AuthRepository(
     private val credentialManager: KeystoreCredentialManager,
-    private val serverUrl: String
+    private val serverUrl: String,
+    context: Context? = null
 ) {
-
     private val TAG = "AuthRepository"
+    private val sessionManager: SessionManager? =
+        context?.let { SessionManager.getInstance(it.applicationContext) }
 
     /**
      * Authenticate user with username and password
@@ -68,7 +68,9 @@ class AuthRepository(
                         email = null
                     )
 
-                    Log.d(TAG, "Login successful for user: $username")
+                    // Schedule background token expiry monitoring (#48)
+                    sessionManager?.scheduleTokenExpiryWorker()
+                    Log.d(TAG, "Login successful for user: $username – token expiry worker scheduled")
                     LoginResult.Success(userInfo)
                 } else {
                     Log.w(TAG, "Login failed for user: $username")
@@ -113,10 +115,12 @@ class AuthRepository(
     }
 
     /**
-     * Logout user - clear all stored credentials
+     * Logout – clears credentials and cancels token expiry monitoring (#48).
+     * Falls back to clearing credentials directly if SessionManager is unavailable.
      */
     fun logout() {
-        credentialManager.clearCredentials()
+        sessionManager?.invalidateSession(SessionManager.REASON_MANUAL_LOGOUT)
+            ?: credentialManager.clearCredentials()
         Log.d(TAG, "User logged out")
     }
 
@@ -161,4 +165,3 @@ class AuthRepository(
         ) : LoginResult()
     }
 }
-

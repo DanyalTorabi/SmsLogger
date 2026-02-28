@@ -52,7 +52,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Initialize dependencies
         val credentialManager = KeystoreCredentialManager.getInstance(this)
-        val authRepository = AuthRepository(credentialManager, config.serverUrl)
+        val authRepository = AuthRepository(credentialManager, config.serverUrl, this)
 
         // Initialize ViewModel
         val factory = AuthViewModelFactory(authRepository)

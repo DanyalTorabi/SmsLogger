@@ -7,15 +7,19 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.smslogger.R
 import com.example.smslogger.api.SmsApiClient
 import com.example.smslogger.api.SmsApiRequest
 import com.example.smslogger.data.AppDatabase
 import com.example.smslogger.data.SmsMessage
+import com.example.smslogger.receiver.SessionExpiredReceiver
+import com.example.smslogger.security.SessionManager
 import kotlinx.coroutines.*
 import kotlin.math.min
 import kotlin.math.pow
@@ -45,6 +49,12 @@ class SmsSyncService : Service() {
     private var isSyncing = false
     private var syncJob: Job? = null
 
+    /** Stops the service when the session is invalidated (#48). */
+    private val sessionExpiredReceiver = SessionExpiredReceiver { reason ->
+        Log.w(TAG, "Session expired ($reason) – stopping SmsSyncService")
+        stopSelf()
+    }
+
     // Exponential backoff configuration
     private val MIN_RETRY_DELAY = 1000L // 1 second
     private val MAX_RETRY_DELAY = 15000L // 15 seconds
@@ -55,17 +65,23 @@ class SmsSyncService : Service() {
         super.onCreate()
         db = AppDatabase.getDatabase(applicationContext)
 
-        // Initialize API client with configuration
-        // Use 10.0.2.2 to access host machine from Android emulator
-        // For physical devices, you would use your actual IP address
+        // Initialize API client with AuthInterceptor for 401 auto-logout (#48)
         apiClient = SmsApiClient(
-            baseUrl = "http://10.0.2.2:8080", // Emulator access to host localhost
-            username = "testuser", // Configure this
-            password = "testpass"  // Configure this
+            baseUrl = "http://10.0.2.2:8080",
+            username = "testuser",
+            password = "testpass",
+            context = applicationContext
         )
 
         Log.d(TAG, "SMS Sync Service Created")
         createNotificationChannel()
+
+        // Register for session expiry broadcasts (#48)
+        ContextCompat.registerReceiver(
+            this, sessionExpiredReceiver,
+            IntentFilter(SessionManager.ACTION_SESSION_EXPIRED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     @SuppressLint("ForegroundServiceType")
@@ -289,6 +305,7 @@ class SmsSyncService : Service() {
         super.onDestroy()
         serviceJob.cancel()
         isSyncing = false
+        unregisterReceiver(sessionExpiredReceiver)
         Log.d(TAG, "SMS Sync Service Destroyed")
     }
 

@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
@@ -15,9 +16,12 @@ import android.os.IBinder
 import android.provider.Telephony
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.smslogger.R
 import com.example.smslogger.data.AppDatabase
 import com.example.smslogger.data.SmsMessage
+import com.example.smslogger.receiver.SessionExpiredReceiver
+import com.example.smslogger.security.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,11 +38,23 @@ class SmsLoggingService : Service() {
 
     private lateinit var db: AppDatabase
 
+    /** Stops the service when the session is invalidated (#48). */
+    private val sessionExpiredReceiver = SessionExpiredReceiver { reason ->
+        Log.w(TAG, "Session expired ($reason) – stopping SmsLoggingService")
+        stopSelf()
+    }
+
     override fun onCreate() {
         super.onCreate()
         db = AppDatabase.getDatabase(applicationContext)
         Log.d(TAG, "Service Created")
         createNotificationChannel()
+        // Register for session expiry broadcasts (#48)
+        ContextCompat.registerReceiver(
+            this, sessionExpiredReceiver,
+            IntentFilter(SessionManager.ACTION_SESSION_EXPIRED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     @SuppressLint("ForegroundServiceType")
@@ -232,6 +248,7 @@ class SmsLoggingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceJob.cancel()
+        unregisterReceiver(sessionExpiredReceiver)
         Log.d(TAG, "Service Destroyed")
     }
 }
