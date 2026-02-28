@@ -20,6 +20,7 @@ import com.example.smslogger.data.AppDatabase
 import com.example.smslogger.data.SmsMessage
 import com.example.smslogger.config.SmsLoggerConfig
 import com.example.smslogger.receiver.SessionExpiredReceiver
+import com.example.smslogger.security.KeystoreCredentialManager
 import com.example.smslogger.security.SessionManager
 import kotlinx.coroutines.*
 import kotlin.math.min
@@ -45,6 +46,7 @@ class SmsSyncService : Service() {
 
     private lateinit var db: AppDatabase
     private lateinit var apiClient: SmsApiClient
+    private lateinit var credentialManager: KeystoreCredentialManager
 
     // Sync configuration
     private var isSyncing = false
@@ -65,6 +67,7 @@ class SmsSyncService : Service() {
     override fun onCreate() {
         super.onCreate()
         db = AppDatabase.getDatabase(applicationContext)
+        credentialManager = KeystoreCredentialManager.getInstance(applicationContext)
 
         // Initialize API client using configured server URL (#49).
         // No username/password needed here – AuthInterceptor injects the stored
@@ -111,7 +114,15 @@ class SmsSyncService : Service() {
             Log.d(TAG, "Starting SMS sync process... (connection attempt ${connectionRetryAttempt + 1})")
 
             try {
-                // Test connection first
+                // ── Auth guard: stop immediately if token is missing/expired (#53) ──
+                if (!credentialManager.isAuthenticated()) {
+                    Log.w(TAG, "Not authenticated – stopping sync service and notifying user")
+                    updateNotification(getString(R.string.error_sync_auth_failed))
+                    stopSelf()
+                    return@launch
+                }
+
+                // Test connectivity to server
                 if (!apiClient.testConnection()) {
                     Log.e(TAG, "Cannot connect to server, will retry later")
                     val nextAttempt = connectionRetryAttempt + 1
@@ -187,13 +198,20 @@ class SmsSyncService : Service() {
                 val apiRequest = smsMessage.toApiRequest()
 
                 if (apiClient.sendSms(apiRequest)) {
-                    // Mark as synced
+                    // Mark as synced and record sync time (#53, #54)
                     val currentTime = System.currentTimeMillis()
                     db.smsDao().markAsSynced(smsMessage.id, currentTime)
+                    SmsLoggerConfig.getInstance(applicationContext).lastSyncTime = currentTime
                     syncedCount++
-
                     Log.d(TAG, "Successfully synced SMS ID: ${smsMessage.id}")
                 } else {
+                    // Check if failure was due to auth (#53) — token may have just expired
+                    if (!credentialManager.isAuthenticated()) {
+                        Log.w(TAG, "Sync failed due to expired/missing token – stopping service")
+                        updateNotification(getString(R.string.error_sync_auth_failed))
+                        stopSelf()
+                        return syncedCount
+                    }
                     Log.w(TAG, "Failed to sync SMS ID: ${smsMessage.id}")
                     break // Stop batch on failure to avoid rate limiting
                 }

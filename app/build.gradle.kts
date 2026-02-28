@@ -71,6 +71,9 @@ dependencies {
     // WorkManager - background token expiry checks (#48)
     implementation(libs.androidx.work.runtime.ktx)
 
+    // Preferences - Settings screen (#54)
+    implementation(libs.androidx.preference)
+
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
