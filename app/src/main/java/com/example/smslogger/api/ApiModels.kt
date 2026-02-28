@@ -31,14 +31,20 @@ data class AuthRequest(
 )
 
 /**
- * Authentication response containing JWT token and user info
- * Fields are optional to support servers returning minimal responses (just token)
+ * Authentication response containing JWT token and user info.
+ *
+ * Supports two expiry representations (#50):
+ * - [expires_at]: ISO-8601 timestamp returned by the server ("expires_at" field)
+ * - [expiresIn]: duration in seconds (legacy / alternative servers)
+ *
+ * Both are optional so older server responses that only return [token] are still accepted.
  */
 @Serializable
 data class AuthResponse(
     val token: String,
     val refreshToken: String? = null,
-    val expiresIn: Long? = null,  // Token validity duration in seconds (optional)
+    val expires_at: String? = null,   // ISO-8601 expiry timestamp from server (#50)
+    val expiresIn: Long? = null,      // Token validity in seconds (alternative format)
     val user: UserInfo? = null
 )
 

@@ -2,20 +2,25 @@ package com.example.smslogger.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.example.smslogger.api.ApiError
 import com.example.smslogger.api.SmsApiClient
 import com.example.smslogger.api.UserInfo
 import com.example.smslogger.security.KeystoreCredentialManager
 import com.example.smslogger.security.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import java.time.Instant
 
 /**
  * Repository for authentication operations.
  *
- * Updated for #48: schedules [TokenExpiryWorker] after login and uses [SessionManager]
- * for logout so the broadcast and worker cancellation happen atomically.
+ * Updated for #49/#50: calls the real POST /api/auth/login endpoint via
+ * [SmsApiClient.login], parses the full [AuthResponse] (including [expires_at]
+ * and [user] fields), and persists a real JWT token to [KeystoreCredentialManager].
  *
- * Dependencies: #46 (KeystoreCredentialManager), #48 (SessionManager), #49/#50 (API models)
+ * Dependencies: #46 (KeystoreCredentialManager), #48 (SessionManager),
+ *               #49 (JWT injection), #50 (API models)
  */
 class AuthRepository(
     private val credentialManager: KeystoreCredentialManager,
@@ -26,15 +31,20 @@ class AuthRepository(
     private val sessionManager: SessionManager? =
         context?.let { SessionManager.getInstance(it.applicationContext) }
 
+    private val json = Json { ignoreUnknownKeys = true }
+
     /**
-     * Authenticate user with username and password
-     * Optionally accepts TOTP code for 2FA authentication
+     * Authenticate user with username and password.
+     * Optionally accepts a TOTP code for 2FA authentication (#50).
+     *
+     * Calls POST /api/auth/login, parses [AuthResponse], and stores the real JWT
+     * (with its expiry) in [KeystoreCredentialManager] (#49).
      *
      * @param username User's username or email
      * @param password User's password
-     * @param totpCode Optional TOTP code for 2FA (6-digit code)
-     * @param rememberMe Whether to save password for future logins
-     * @return LoginResult containing success status and optional error details
+     * @param totpCode Optional 6-digit TOTP code for 2FA
+     * @param rememberMe Whether to persist the password for future logins
+     * @return [LoginResult] containing success status and optional error details
      */
     suspend fun login(
         username: String,
@@ -43,34 +53,48 @@ class AuthRepository(
         rememberMe: Boolean = false
     ): LoginResult {
         return try {
-            // Perform authentication on IO dispatcher
             val result = withContext(Dispatchers.IO) {
                 val apiClient = SmsApiClient(serverUrl, username, password)
-                val success = apiClient.testConnection()
+                val authResponse = apiClient.login(totpCode)
 
-                if (success) {
-                    // Create mock user info (will be properly handled when API is updated in #49/#50)
-                    val userInfo = UserInfo(
+                if (authResponse != null) {
+                    // Resolve token expiry seconds from either field (#50)
+                    val expiresInSeconds: Long = when {
+                        authResponse.expiresIn != null -> authResponse.expiresIn
+                        authResponse.expires_at != null -> {
+                            try {
+                                val expiryInstant = Instant.parse(authResponse.expires_at)
+                                val remaining = (expiryInstant.toEpochMilli() - System.currentTimeMillis()) / 1000
+                                if (remaining > 0) remaining else 3600L
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Could not parse expires_at '${authResponse.expires_at}', defaulting to 1h", e)
+                                3600L
+                            }
+                        }
+                        else -> 3600L // Sensible default when server omits expiry info
+                    }
+
+                    val userInfo = authResponse.user ?: UserInfo(
                         id = username,
                         username = username,
                         email = null,
                         createdAt = null
                     )
 
-                    // Save credentials to secure storage
+                    // Persist real JWT token and expiry (#49)
                     credentialManager.saveCredentials(
                         username = username,
                         password = if (rememberMe) password else null,
-                        jwtToken = "legacy_token_${System.currentTimeMillis()}", // Placeholder
-                        refreshToken = null,
-                        expiresInSeconds = 3600, // 1 hour
-                        userId = username,
-                        email = null
+                        jwtToken = authResponse.token,
+                        refreshToken = authResponse.refreshToken,
+                        expiresInSeconds = expiresInSeconds,
+                        userId = userInfo.id,
+                        email = userInfo.email
                     )
 
                     // Schedule background token expiry monitoring (#48)
                     sessionManager?.scheduleTokenExpiryWorker()
-                    Log.d(TAG, "Login successful for user: $username – token expiry worker scheduled")
+                    Log.d(TAG, "Login successful for user: ${userInfo.username} – token valid for ${expiresInSeconds}s")
                     LoginResult.Success(userInfo)
                 } else {
                     Log.w(TAG, "Login failed for user: $username")

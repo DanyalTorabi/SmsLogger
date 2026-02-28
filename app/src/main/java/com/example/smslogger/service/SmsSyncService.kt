@@ -18,6 +18,7 @@ import com.example.smslogger.api.SmsApiClient
 import com.example.smslogger.api.SmsApiRequest
 import com.example.smslogger.data.AppDatabase
 import com.example.smslogger.data.SmsMessage
+import com.example.smslogger.config.SmsLoggerConfig
 import com.example.smslogger.receiver.SessionExpiredReceiver
 import com.example.smslogger.security.SessionManager
 import kotlinx.coroutines.*
@@ -65,11 +66,12 @@ class SmsSyncService : Service() {
         super.onCreate()
         db = AppDatabase.getDatabase(applicationContext)
 
-        // Initialize API client with AuthInterceptor for 401 auto-logout (#48)
+        // Initialize API client using configured server URL (#49).
+        // No username/password needed here – AuthInterceptor injects the stored
+        // JWT Bearer token from KeystoreCredentialManager automatically.
+        val serverUrl = SmsLoggerConfig.getInstance(applicationContext).serverUrl
         apiClient = SmsApiClient(
-            baseUrl = "http://10.0.2.2:8080",
-            username = "testuser",
-            password = "testpass",
+            baseUrl = serverUrl,
             context = applicationContext
         )
 
