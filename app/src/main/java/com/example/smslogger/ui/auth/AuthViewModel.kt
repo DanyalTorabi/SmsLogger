@@ -3,6 +3,12 @@ package com.example.smslogger.ui.auth
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smslogger.data.exception.AccountInactiveException
+import com.example.smslogger.data.exception.AccountLockedException
+import com.example.smslogger.data.exception.AuthException
+import com.example.smslogger.data.exception.InvalidCredentialsException
+import com.example.smslogger.data.exception.NetworkException
+import com.example.smslogger.data.exception.ServerErrorException
 import com.example.smslogger.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -73,23 +79,23 @@ class AuthViewModel(
                 rememberMe = rememberMe
             )
 
-            when (result) {
-                is AuthRepository.LoginResult.Success -> {
-                    Log.d(TAG, "Login successful for user: $username")
-                    _authState.value = AuthState.Success(result.user)
-                    _errorMessage.value = null
-                }
-
-                is AuthRepository.LoginResult.Error -> {
-                    Log.w(TAG, "Login failed for user: $username - Code: ${result.code}")
-                    val userMessage = mapErrorCodeToMessage(result.code, result.httpCode)
-                    _authState.value = AuthState.Error(
-                        message = userMessage,
-                        code = result.code
+            result.fold(
+                onSuccess = { loginResponse ->
+                    Log.d(TAG, "Login successful")
+                    _authState.value = AuthState.Success(
+                        loginResponse.user ?: com.example.smslogger.api.UserInfo(
+                            id = username, username = username, email = null, createdAt = null
+                        )
                     )
+                    _errorMessage.value = null
+                },
+                onFailure = { throwable ->
+                    val userMessage = mapAuthExceptionToMessage(throwable)
+                    Log.w(TAG, "Login failed: ${throwable.javaClass.simpleName}")
+                    _authState.value = AuthState.Error(message = userMessage)
                     _errorMessage.value = userMessage
                 }
-            }
+            )
         }
     }
 
@@ -161,44 +167,18 @@ class AuthViewModel(
     }
 
     /**
-     * Map server error code to user-friendly message
-     * Handles all error scenarios from issue #47:
-     * - Invalid credentials
-     * - Account locked (30-minute retry window)
-     * - Invalid TOTP/2FA code
-     * - Network errors
-     * - Server errors
-     *
-     * @param errorCode Error code from AuthRepository
-     * @param httpCode HTTP status code (if applicable)
-     * @return User-friendly error message for display
+     * Map a typed [AuthException] (or any [Throwable]) to a user-friendly message.
+     * Uses the exception's own message when it carries a server-provided description,
+     * falling back to sensible defaults.
      */
-    private fun mapErrorCodeToMessage(errorCode: String, httpCode: Int? = null): String {
-        return when {
-            // Handle HTTP status codes first
-            httpCode == 401 -> "Invalid username or password"
-            httpCode == 403 -> {
-                // Could be account locked or other forbidden reason
-                if (errorCode == "ACCOUNT_LOCKED") {
-                    "Account locked. Try again in 30 minutes"
-                } else {
-                    "Access forbidden. Please contact support"
-                }
-            }
-            httpCode == 500 -> "Server error. Please try again later"
-
-            // Handle specific error codes
-            errorCode == "INVALID_CREDENTIALS" -> "Invalid username or password"
-            errorCode == "ACCOUNT_LOCKED" -> "Account locked. Try again in 30 minutes"
-            errorCode == "INVALID_TOTP" -> "Invalid 2FA code"
-            errorCode == "TOTP_REQUIRED" -> "Two-factor authentication code required"
-            errorCode == "ACCOUNT_INACTIVE" -> "Your account has been deactivated"
-            errorCode == "NETWORK_ERROR" -> "Network error. Please try again"
-            errorCode == "SERVER_ERROR" -> "Server temporarily unavailable"
-
-            // Default
-            else -> "An error occurred. Please try again"
-        }
+    private fun mapAuthExceptionToMessage(throwable: Throwable): String = when (throwable) {
+        is InvalidCredentialsException -> throwable.message ?: "Invalid username or password"
+        is AccountLockedException     -> throwable.message ?: "Account locked. Try again in 30 minutes"
+        is AccountInactiveException   -> throwable.message ?: "Your account has been deactivated"
+        is ServerErrorException       -> throwable.message ?: "Server temporarily unavailable"
+        is NetworkException           -> throwable.message ?: "Network error. Please try again"
+        is AuthException              -> throwable.message ?: "An error occurred. Please try again"
+        else                          -> "An error occurred. Please try again"
     }
 }
 
