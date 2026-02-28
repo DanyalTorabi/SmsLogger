@@ -1,79 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Account Section -->
     <PreferenceCategory
-        app:title="@string/pref_category_account"
-        app:key="category_account">
+        android:title="@string/pref_category_account"
+        android:key="category_account">
 
         <!-- Logged-in username (read-only display) -->
         <Preference
-            app:key="pref_username"
-            app:title="@string/pref_username_title"
-            app:summary="@string/pref_username_summary_placeholder"
-            app:selectable="false"
-            app:iconSpaceReserved="false" />
+            android:key="pref_username"
+            android:title="@string/pref_username_title"
+            android:summary="@string/pref_username_summary_placeholder"
+            android:selectable="false" />
 
         <!-- Logout -->
         <Preference
-            app:key="pref_logout"
-            app:title="@string/pref_logout_title"
-            app:summary="@string/pref_logout_summary"
-            app:iconSpaceReserved="false" />
+            android:key="pref_logout"
+            android:title="@string/pref_logout_title"
+            android:summary="@string/pref_logout_summary" />
 
     </PreferenceCategory>
 
     <!-- Sync Section -->
     <PreferenceCategory
-        app:title="@string/pref_category_sync"
-        app:key="category_sync">
+        android:title="@string/pref_category_sync"
+        android:key="category_sync">
 
         <!-- Last sync time (read-only display) -->
         <Preference
-            app:key="pref_last_sync"
-            app:title="@string/pref_last_sync_title"
-            app:summary="@string/pref_last_sync_never"
-            app:selectable="false"
-            app:iconSpaceReserved="false" />
+            android:key="pref_last_sync"
+            android:title="@string/pref_last_sync_title"
+            android:summary="@string/pref_last_sync_never"
+            android:selectable="false" />
 
         <!-- Manual sync trigger -->
         <Preference
-            app:key="pref_sync_now"
-            app:title="@string/pref_sync_now_title"
-            app:summary="@string/pref_sync_now_summary"
-            app:iconSpaceReserved="false" />
+            android:key="pref_sync_now"
+            android:title="@string/pref_sync_now_title"
+            android:summary="@string/pref_sync_now_summary" />
 
     </PreferenceCategory>
 
     <!-- About Section -->
     <PreferenceCategory
-        app:title="@string/pref_category_about"
-        app:key="category_about">
+        android:title="@string/pref_category_about"
+        android:key="category_about">
 
         <!-- App version (read-only) -->
         <Preference
-            app:key="pref_app_version"
-            app:title="@string/pref_app_version_title"
-            app:selectable="false"
-            app:iconSpaceReserved="false" />
+            android:key="pref_app_version"
+            android:title="@string/pref_app_version_title"
+            android:selectable="false" />
 
         <!-- Server URL (read-only) -->
         <Preference
-            app:key="pref_server_url"
-            app:title="@string/pref_server_url_title"
-            app:selectable="false"
-            app:iconSpaceReserved="false" />
+            android:key="pref_server_url"
+            android:title="@string/pref_server_url_title"
+            android:selectable="false" />
 
         <!-- 2FA info — managed server-side -->
         <Preference
-            app:key="pref_2fa_info"
-            app:title="@string/pref_2fa_title"
-            app:summary="@string/pref_2fa_summary"
-            app:selectable="false"
-            app:iconSpaceReserved="false" />
+            android:key="pref_2fa_info"
+            android:title="@string/pref_2fa_title"
+            android:summary="@string/pref_2fa_summary"
+            android:selectable="false" />
 
     </PreferenceCategory>
 
 </PreferenceScreen>
-
