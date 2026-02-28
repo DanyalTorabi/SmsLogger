@@ -88,6 +88,16 @@ class LoginActivity : AppCompatActivity() {
             hideError()
         }
 
+        // TOTP field: clear error on change; auto-advance to login button after 6 digits
+        binding.editTextTotp.doAfterTextChanged { text ->
+            binding.textInputLayoutTotp.error = null
+            hideError()
+            if ((text?.length ?: 0) == 6) {
+                // Move focus to login button so user can confirm or just tap it
+                binding.buttonLogin.requestFocus()
+            }
+        }
+
         // Handle IME actions
         binding.editTextUsername.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_NEXT) {
@@ -98,7 +108,18 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
+        // Password moves to TOTP field on Next
         binding.editTextPassword.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                binding.editTextTotp.requestFocus()
+                true
+            } else {
+                false
+            }
+        }
+
+        // TOTP triggers login on Done
+        binding.editTextTotp.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 attemptLogin()
                 true
@@ -124,11 +145,13 @@ class LoginActivity : AppCompatActivity() {
         // Get input values
         val username = binding.editTextUsername.text.toString().trim()
         val password = binding.editTextPassword.text.toString()
+        val totpRaw = binding.editTextTotp.text.toString().trim()
         val rememberMe = binding.checkBoxRememberMe.isChecked
 
         // Clear previous errors
         binding.textInputLayoutUsername.error = null
         binding.textInputLayoutPassword.error = null
+        binding.textInputLayoutTotp.error = null
         hideError()
 
         // Basic validation
@@ -147,6 +170,12 @@ class LoginActivity : AppCompatActivity() {
             hasError = true
         }
 
+        // TOTP validation: must be empty OR exactly 6 digits
+        if (totpRaw.isNotEmpty() && (totpRaw.length != 6 || !totpRaw.all { it.isDigit() })) {
+            binding.textInputLayoutTotp.error = getString(R.string.error_totp_invalid)
+            hasError = true
+        }
+
         if (hasError) {
             return
         }
@@ -158,7 +187,7 @@ class LoginActivity : AppCompatActivity() {
         viewModel.login(
             username = username,
             password = password,
-            totpCode = null,  // TOTP support for future 2FA implementation
+            totpCode = totpRaw.ifEmpty { null },
             rememberMe = rememberMe
         )
     }
@@ -190,6 +219,8 @@ class LoginActivity : AppCompatActivity() {
                         is AuthState.Error -> {
                             showLoading(false)
                             showError(state.message)
+                            // Clear TOTP field on error so user can re-enter a fresh code
+                            binding.editTextTotp.text?.clear()
                         }
                     }
                 }
@@ -204,6 +235,7 @@ class LoginActivity : AppCompatActivity() {
         binding.buttonLogin.isEnabled = !loading
         binding.editTextUsername.isEnabled = !loading
         binding.editTextPassword.isEnabled = !loading
+        binding.editTextTotp.isEnabled = !loading
         binding.checkBoxRememberMe.isEnabled = !loading
 
         if (loading) {

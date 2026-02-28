@@ -79,20 +79,50 @@
         app:boxStrokeColor="?attr/colorPrimary"
         app:hintTextColor="?attr/colorPrimary"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="16dp"
         app:layout_constraintTop_toBottomOf="@id/textInputLayoutUsername"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/checkBoxRememberMe">
+        app:layout_constraintBottom_toTopOf="@id/textInputLayoutTotp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editTextPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
-            android:imeOptions="actionDone"
+            android:imeOptions="actionNext"
             android:maxLines="1"
             android:contentDescription="@string/content_desc_password_field"
+            tools:ignore="Autofill" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- TOTP / 2FA Code Input (#52) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayoutTotp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="@string/totp_label"
+        app:helperText="@string/totp_help_text"
+        app:helperTextEnabled="true"
+        app:boxStrokeColor="?attr/colorPrimary"
+        app:hintTextColor="?attr/colorPrimary"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@id/textInputLayoutPassword"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/checkBoxRememberMe">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTextTotp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:maxLength="6"
+            android:imeOptions="actionDone"
+            android:maxLines="1"
+            android:hint="@string/totp_hint"
+            android:contentDescription="@string/content_desc_totp_field"
             tools:ignore="Autofill" />
     </com.google.android.material.textfield.TextInputLayout>
 
