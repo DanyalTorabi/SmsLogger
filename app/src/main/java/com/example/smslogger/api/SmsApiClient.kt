@@ -17,15 +17,16 @@ import java.util.concurrent.TimeUnit
  *  - The JWT Bearer token is attached automatically to every request
  *  - HTTP 401 responses trigger auto-logout via [SessionManager]
  *
- * The username/password constructor params are kept for the initial login/testConnection
- * flow in [AuthRepository] before credentials are persisted to [KeystoreCredentialManager].
+ * [username] and [password] are only needed for the initial login flow
+ * ([AuthRepository]). When instantiated for SMS syncing ([SmsSyncService]),
+ * omit them — [AuthInterceptor] will inject the stored token instead (#49).
  *
- * Related: #48 (Auto-Logout and Re-Authentication Flow)
+ * Related: #48 (Auto-Logout), #49 (JWT header injection), #50 (API models)
  */
 class SmsApiClient(
     private val baseUrl: String,
-    private val username: String,
-    private val password: String,
+    private val username: String = "",
+    private val password: String = "",
     context: Context? = null
 ) {
     private val TAG = "SmsApiClient"
@@ -47,16 +48,17 @@ class SmsApiClient(
     private var tokenExpiryTime: Long = 0
     private val AUTH_CACHE_DURATION = 5 * 60 * 1000L
 
-    private suspend fun authenticate(): String? {
-        val currentTime = System.currentTimeMillis()
-        if (cachedToken != null && currentTime < tokenExpiryTime) {
-            Log.d(TAG, "Using cached authentication token")
-            return cachedToken
-        }
-
-        Log.d(TAG, "Authenticating with server...")
+    /**
+     * Authenticate against POST /api/auth/login and return the full [AuthResponse].
+     *
+     * Accepts an optional [totpCode] for 2FA (#50).
+     * On success the token is cached internally for [AUTH_CACHE_DURATION].
+     * Returns null on any network or server error.
+     */
+    suspend fun login(totpCode: String? = null): AuthResponse? {
+        Log.d(TAG, "Logging in with base URL:[$baseUrl] user:[$username]")
         return try {
-            val loginRequest = AuthRequest(username, password)
+            val loginRequest = AuthRequest(username, password, totp_code = totpCode)
             val jsonBody = json.encodeToString(AuthRequest.serializer(), loginRequest)
             val requestBody = jsonBody.toRequestBody("application/json".toMediaType())
 
@@ -66,38 +68,51 @@ class SmsApiClient(
                 .header("Content-Type", "application/json")
                 .build()
 
-            Log.d(TAG, "Authenticating with base URL:[$baseUrl] user:[$username]")
             val response = httpClient.newCall(request).execute()
 
             if (response.isSuccessful) {
                 val responseBody = response.body?.string()
                 if (responseBody != null) {
                     val authResponse = json.decodeFromString<AuthResponse>(responseBody)
+                    // Cache token for testConnection() fall-through callers
                     cachedToken = authResponse.token
-                    tokenExpiryTime = currentTime + AUTH_CACHE_DURATION
-                    Log.d(TAG, "Authentication successful, token cached for 5 minutes")
-                    authResponse.token
-                } else null
+                    tokenExpiryTime = System.currentTimeMillis() + AUTH_CACHE_DURATION
+                    Log.d(TAG, "Login successful – token cached")
+                    authResponse
+                } else {
+                    Log.e(TAG, "Login succeeded but response body was empty")
+                    null
+                }
             } else {
-                Log.e(TAG, "Authentication failed: ${response.code} ${response.message}")
+                Log.e(TAG, "Login failed: ${response.code} ${response.message}")
                 val errorBody = response.body?.string()
                 if (errorBody != null) {
                     try {
                         val error = json.decodeFromString<ApiError>(errorBody)
-                        Log.e(TAG, "Auth error: ${error.error}")
+                        Log.e(TAG, "Login error: ${error.error} – ${error.message}")
                     } catch (_: Exception) {
-                        Log.e(TAG, "Auth error body: $errorBody")
+                        Log.e(TAG, "Login error body: $errorBody")
                     }
                 }
                 null
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Network error during authentication", e)
+            Log.e(TAG, "Network error during login", e)
             null
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error during authentication", e)
+            Log.e(TAG, "Unexpected error during login", e)
             null
         }
+    }
+
+    // Keep private authenticate() delegating to login() to avoid breaking testConnection()
+    private suspend fun authenticate(): String? {
+        val currentTime = System.currentTimeMillis()
+        if (cachedToken != null && currentTime < tokenExpiryTime) {
+            Log.d(TAG, "Using cached authentication token")
+            return cachedToken
+        }
+        return login()?.token
     }
 
     /**

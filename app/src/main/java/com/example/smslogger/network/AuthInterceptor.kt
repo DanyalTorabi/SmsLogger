@@ -33,6 +33,11 @@ class AuthInterceptor(context: Context) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest: Request = chain.request()
 
+        // ── Skip auth header for the login endpoint itself (#49) ──────────────
+        if (originalRequest.url.encodedPath.contains("/auth/login")) {
+            return chain.proceed(originalRequest)
+        }
+
         // ── Proactive token expiry check ──────────────────────────────────────
         if (credentialManager.isTokenExpired()) {
             Log.w(TAG, "Token expired before request – triggering session invalidation")
