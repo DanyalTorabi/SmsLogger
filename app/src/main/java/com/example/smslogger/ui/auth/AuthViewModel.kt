@@ -34,10 +34,17 @@ class AuthViewModel(
     // Mutable state for internal use
     private val _authState = MutableStateFlow<AuthState>(AuthState.Initial)
     private val _errorMessage = MutableStateFlow<String?>(null)
+    private val _isLocked = MutableStateFlow(false)
 
     // Public immutable state for UI observation
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    /** True when the server has indicated the account is locked (#55). */
+    val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
+
+    // Local failed-attempt counter for security event logging (#55)
+    private var failedAttempts = 0
 
     /**
      * Login with username and password
@@ -82,6 +89,8 @@ class AuthViewModel(
             result.fold(
                 onSuccess = { loginResponse ->
                     Log.d(TAG, "Login successful")
+                    failedAttempts = 0
+                    _isLocked.value = false
                     _authState.value = AuthState.Success(
                         loginResponse.user ?: com.example.smslogger.api.UserInfo(
                             id = username, username = username, email = null, createdAt = null
@@ -91,7 +100,10 @@ class AuthViewModel(
                 },
                 onFailure = { throwable ->
                     val userMessage = mapAuthExceptionToMessage(throwable)
-                    Log.w(TAG, "Login failed: ${throwable.javaClass.simpleName}")
+                    failedAttempts++
+                    Log.w(TAG, "Login failed (attempt $failedAttempts): ${throwable.javaClass.simpleName}")
+                    // Track account-locked state for UI (#55)
+                    _isLocked.value = throwable is AccountLockedException
                     _authState.value = AuthState.Error(message = userMessage)
                     _errorMessage.value = userMessage
                 }
@@ -153,6 +165,7 @@ class AuthViewModel(
         if (_authState.value is AuthState.Error) {
             _authState.value = AuthState.Initial
         }
+        _isLocked.value = false
         _errorMessage.value = null
     }
 
@@ -161,6 +174,8 @@ class AuthViewModel(
      */
     fun logout() {
         authRepository.logout()
+        failedAttempts = 0
+        _isLocked.value = false
         _authState.value = AuthState.Initial
         _errorMessage.value = null
         Log.d(TAG, "User logged out")

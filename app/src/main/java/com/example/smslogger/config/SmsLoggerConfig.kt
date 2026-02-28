@@ -51,6 +51,11 @@ class SmsLoggerConfig private constructor(context: Context) {
         get() = prefs.getLong(KEY_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL)
         set(value) = prefs.edit { putLong(KEY_SYNC_INTERVAL, value) }
 
+    /** Unix timestamp (ms) of the last successful SMS sync batch. 0 if never synced. */
+    var lastSyncTime: Long
+        get() = prefs.getLong(KEY_LAST_SYNC_TIME, 0L)
+        set(value) = prefs.edit { putLong(KEY_LAST_SYNC_TIME, value) }
+
     var batchSize: Int
         get() = prefs.getInt(KEY_BATCH_SIZE, DEFAULT_BATCH_SIZE)
         set(value) = prefs.edit { putInt(KEY_BATCH_SIZE, value) }
@@ -92,6 +97,7 @@ class SmsLoggerConfig private constructor(context: Context) {
         private const val KEY_SYNC_INTERVAL = "sync_interval"
         private const val KEY_BATCH_SIZE = "batch_size"
         private const val KEY_MAX_RETRY_ATTEMPTS = "max_retry_attempts"
+        private const val KEY_LAST_SYNC_TIME = "last_sync_time"
 
         // Defaults
         private const val DEFAULT_SERVER_URL = "http://10.0.2.2:8080"

@@ -198,29 +198,51 @@ class LoginActivity : AppCompatActivity() {
     private fun observeAuthState() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.authState.collect { state ->
-                    when (state) {
-                        is AuthState.Initial -> {
-                            showLoading(false)
-                            hideError()
+                // Observe primary auth state
+                launch {
+                    viewModel.authState.collect { state ->
+                        when (state) {
+                            is AuthState.Initial -> {
+                                showLoading(false)
+                                hideError()
+                            }
+                            is AuthState.Loading -> {
+                                showLoading(true)
+                                hideError()
+                            }
+                            is AuthState.Success -> {
+                                showLoading(false)
+                                hideError()
+                                onLoginSuccess()
+                            }
+                            is AuthState.Error -> {
+                                showLoading(false)
+                                showError(state.message)
+                                // Clear TOTP on error so user enters a fresh code (#52, #55)
+                                binding.editTextTotp.text?.clear()
+                                // Highlight TOTP field for 2FA-specific errors (#55)
+                                val msg = state.message.lowercase()
+                                if (msg.contains("2fa") || msg.contains("totp") ||
+                                    msg.contains("authenticator") || msg.contains("two-factor")) {
+                                    binding.textInputLayoutTotp.error = state.message
+                                }
+                            }
                         }
-
-                        is AuthState.Loading -> {
-                            showLoading(true)
-                            hideError()
-                        }
-
-                        is AuthState.Success -> {
-                            showLoading(false)
-                            hideError()
-                            onLoginSuccess()
-                        }
-
-                        is AuthState.Error -> {
-                            showLoading(false)
-                            showError(state.message)
-                            // Clear TOTP field on error so user can re-enter a fresh code
-                            binding.editTextTotp.text?.clear()
+                    }
+                }
+                // Observe lockout state: disable login controls when account is locked (#55)
+                launch {
+                    viewModel.isLocked.collect { locked ->
+                        val notLoading = viewModel.authState.value !is AuthState.Loading
+                        binding.buttonLogin.isEnabled = !locked
+                        if (locked) {
+                            binding.editTextUsername.isEnabled = false
+                            binding.editTextPassword.isEnabled = false
+                            binding.editTextTotp.isEnabled = false
+                        } else if (notLoading) {
+                            binding.editTextUsername.isEnabled = true
+                            binding.editTextPassword.isEnabled = true
+                            binding.editTextTotp.isEnabled = true
                         }
                     }
                 }

@@ -47,6 +47,13 @@
             android:theme="@style/Theme.SmsLogger"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Settings Activity (#54) -->
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmsLogger"
+            android:parentActivityName=".ui.auth.LoginActivity" />
+
         <!-- SMS Logging Service -->
         <service
             android:name=".service.SmsLoggingService"
