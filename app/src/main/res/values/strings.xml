@@ -30,9 +30,16 @@
     <string name="session_expiry_warning_notification_text">Your session will expire in 5 minutes. Please login again to stay connected.</string>
     <string name="notification_channel_session_name">Session Alerts</string>
 
+    <!-- TOTP / 2FA (#52) -->
+    <string name="totp_label">2FA Code (if enabled)</string>
+    <string name="totp_hint">6-digit code</string>
+    <string name="totp_help_text">Enter code from Google Authenticator if you have 2FA enabled</string>
+    <string name="error_totp_invalid">2FA code must be exactly 6 digits</string>
+
     <!-- Accessibility -->
     <string name="content_desc_username_field">Username input field</string>
     <string name="content_desc_password_field">Password input field</string>
+    <string name="content_desc_totp_field">Two-factor authentication code input field</string>
     <string name="content_desc_login_button">Login button</string>
     <string name="content_desc_toggle_password_visibility">Toggle password visibility</string>
 </resources>
