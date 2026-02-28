@@ -68,6 +68,9 @@ dependencies {
     // Security - EncryptedSharedPreferences
     implementation(libs.androidx.security.crypto)
 
+    // WorkManager - background token expiry checks (#48)
+    implementation(libs.androidx.work.runtime.ktx)
+
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)

@@ -23,6 +23,13 @@
     <string name="error_timeout">Connection timeout. Please try again.</string>
     <string name="error_unknown">An error occurred. Please try again.</string>
 
+    <!-- Session / Auto-Logout (#48) -->
+    <string name="session_expired_notification_title">Session Expired</string>
+    <string name="session_expired_notification_text">Session expired. Please login again.</string>
+    <string name="session_expiry_warning_notification_title">Session Expiring Soon</string>
+    <string name="session_expiry_warning_notification_text">Your session will expire in 5 minutes. Please login again to stay connected.</string>
+    <string name="notification_channel_session_name">Session Alerts</string>
+
     <!-- Accessibility -->
     <string name="content_desc_username_field">Username input field</string>
     <string name="content_desc_password_field">Password input field</string>
