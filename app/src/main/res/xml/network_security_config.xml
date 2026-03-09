@@ -13,28 +13,34 @@
     <!--
         Production domain: HTTPS only + certificate pin-set (#56).
 
-        IMPORTANT: Replace "yourdomain.com" and the sha256/ values with real data.
-        Extract the pin with:
-          openssl s_client -connect yourdomain.com:443 \
-            | openssl x509 -pubkey -noout \
-            | openssl pkey -pubin -outform der \
-            | openssl dgst -sha256 -binary \
-            | openssl enc -base64
+        ╔══════════════════════════════════════════════════════════════════════╗
+        ║  SOURCE OF TRUTH: docs/security/android-pin-bundle.json             ║
+        ║  in DanyalTorabi/sms-syncer-server (server handoff issue #130)      ║
+        ║                                                                      ║
+        ║  DO NOT edit hostname or pin values here directly.                   ║
+        ║  Always derive them from the server pin bundle:                      ║
+        ║    android-pin-bundle.json → hosts[].hostname                        ║
+        ║    android-pin-bundle.json → hosts[].pins.current                    ║
+        ║    android-pin-bundle.json → hosts[].pins.backup                     ║
+        ║    android-pin-bundle.json → hosts[].validity.notAfter  (expiration) ║
+        ║                                                                      ║
+        ║  Rotation workflow (14-day notice required):                         ║
+        ║    See docs/security/android-certificate-pinning-runbook.md          ║
+        ╚══════════════════════════════════════════════════════════════════════╝
 
-        Keep at least one backup pin (for certificate rotation) before deploying
-        a new certificate to the server.
-
-        expiration: set to a date beyond the certificate's validity period.
-        If the date passes without a cert rotation the OS will stop pinning
-        (fail-open) rather than breaking the app permanently.
+        Placeholder values below must be replaced with real production data
+        from the server pin bundle before releasing to production.
+        See: https://github.com/DanyalTorabi/sms-syncer-server/issues/130
     -->
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">yourdomain.com</domain>
+        <!-- hostname → android-pin-bundle.json hosts[].hostname -->
+        <domain includeSubdomains="true">api.example.com</domain>
+        <!-- expiration → android-pin-bundle.json hosts[].validity.notAfter -->
         <pin-set expiration="2027-01-01">
-            <!-- Primary pin – current server certificate public key -->
-            <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
-            <!-- Backup pin – next certificate ready for rotation -->
-            <pin digest="SHA-256">BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
+            <!-- current → android-pin-bundle.json hosts[].pins.current -->
+            <pin digest="SHA-256">REPLACE_WITH_PROD_CURRENT_SPKI</pin>
+            <!-- backup  → android-pin-bundle.json hosts[].pins.backup -->
+            <pin digest="SHA-256">REPLACE_WITH_PROD_BACKUP_SPKI</pin>
         </pin-set>
     </domain-config>
 
