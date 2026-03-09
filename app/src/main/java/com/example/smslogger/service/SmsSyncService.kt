@@ -19,6 +19,7 @@ import com.example.smslogger.api.SmsApiRequest
 import com.example.smslogger.data.AppDatabase
 import com.example.smslogger.data.SmsMessage
 import com.example.smslogger.config.SmsLoggerConfig
+import com.example.smslogger.data.exception.CertificatePinningException
 import com.example.smslogger.receiver.SessionExpiredReceiver
 import com.example.smslogger.security.KeystoreCredentialManager
 import com.example.smslogger.security.SessionManager
@@ -219,6 +220,11 @@ class SmsSyncService : Service() {
                 // Small delay between requests to be respectful to the server
                 delay(100)
 
+            } catch (e: CertificatePinningException) {
+                Log.e(TAG, "Certificate pinning failure – halting sync to protect against MITM", e)
+                updateNotification(getString(R.string.error_cert_pinning_failed))
+                stopSelf()
+                return syncedCount
             } catch (e: Exception) {
                 Log.e(TAG, "Error syncing SMS ID: ${smsMessage.id}", e)
                 break // Stop batch on error

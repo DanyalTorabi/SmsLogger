@@ -45,6 +45,9 @@
     <!-- Sync auth failure notification (#53) -->
     <string name="error_sync_auth_failed">Sync paused — please log in again</string>
 
+    <!-- Certificate pinning failure notification (#56) -->
+    <string name="error_cert_pinning_failed">Security alert: server certificate mismatch. Sync halted.</string>
+
     <!-- Settings screen (#54) -->
     <string name="settings_title">Settings</string>
     <string name="pref_category_account">Account</string>

@@ -49,3 +49,17 @@ class NetworkException(
     cause: Throwable? = null
 ) : AuthException(message, cause)
 
+/**
+ * Thrown when OkHttp's [CertificatePinner] rejects the server's certificate (#56).
+ *
+ * This indicates either:
+ * - A genuine MITM attack
+ * - The server certificate was rotated and the app pins are stale
+ *
+ * The user should be warned and sync halted until the app is updated.
+ */
+class CertificatePinningException(
+    message: String = "Server certificate does not match the expected pin. Connection refused.",
+    cause: Throwable? = null
+) : AuthException(message, cause)
+

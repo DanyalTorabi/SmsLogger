@@ -20,9 +20,32 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Certificate pinning disabled in debug – empty strings = no pinning
+            buildConfigField "String", "CERT_HOSTNAME", '""'
+            buildConfigField "String", "CERT_PIN_PRIMARY", '""'
+            buildConfigField "String", "CERT_PIN_BACKUP", '""'
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // ── Certificate Pinning – SOURCE OF TRUTH ────────────────────────
+            // Values MUST be derived from the server pin bundle before release:
+            //   DanyalTorabi/sms-syncer-server → docs/security/android-pin-bundle.json
+            //   Server handoff issue: DanyalTorabi/sms-syncer-server#130
+            //   Rotation runbook:     docs/security/android-certificate-pinning-runbook.md
+            //
+            // Local dev / staging / production setup:
+            //   See docs/security/CERTIFICATE_PINNING.md in this repo
+            //
+            // Mapping:
+            //   CERT_HOSTNAME    ← hosts[].hostname
+            //   CERT_PIN_PRIMARY ← hosts[].pins.current  (sha256/...)
+            //   CERT_PIN_BACKUP  ← hosts[].pins.backup   (sha256/...)
+            // ─────────────────────────────────────────────────────────────────
+            buildConfigField "String", "CERT_HOSTNAME", '"api.example.com"'
+            buildConfigField "String", "CERT_PIN_PRIMARY", '"sha256/REPLACE_WITH_PROD_CURRENT_SPKI"'
+            buildConfigField "String", "CERT_PIN_BACKUP", '"sha256/REPLACE_WITH_PROD_BACKUP_SPKI"'
         }
     }
     compileOptions {
@@ -35,6 +58,7 @@ android {
     // If you use View Binding or Data Binding
      buildFeatures {
          viewBinding true // If you use ViewBinding in your Activity
+         buildConfig true // Required for BuildConfig.CERT_* fields (#56)
      }
 }
 

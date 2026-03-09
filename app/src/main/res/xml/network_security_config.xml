@@ -1,20 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Allow cleartext traffic for development -->
+    <!--
+        Development domains: allow cleartext (HTTP) for emulator / local testing.
+        Certificate pinning is NOT applied here – debug BuildConfig fields are empty.
+    -->
     <domain-config cleartextTrafficPermitted="true">
-        <!-- Emulator access to host -->
         <domain includeSubdomains="false">10.0.2.2</domain>
-        <!-- Localhost for development -->
         <domain includeSubdomains="false">localhost</domain>
-        <!-- Local network range for testing -->
         <domain includeSubdomains="false">192.168.1.1</domain>
     </domain-config>
 
-    <!-- For production, you should use HTTPS only -->
+    <!--
+        Production domain: HTTPS only + certificate pin-set (#56).
+
+        ╔══════════════════════════════════════════════════════════════════════╗
+        ║  SOURCE OF TRUTH: docs/security/android-pin-bundle.json             ║
+        ║  in DanyalTorabi/sms-syncer-server (server handoff issue #130)      ║
+        ║                                                                      ║
+        ║  DO NOT edit hostname or pin values here directly.                   ║
+        ║  Always derive them from the server pin bundle:                      ║
+        ║    android-pin-bundle.json → hosts[].hostname                        ║
+        ║    android-pin-bundle.json → hosts[].pins.current                    ║
+        ║    android-pin-bundle.json → hosts[].pins.backup                     ║
+        ║    android-pin-bundle.json → hosts[].validity.notAfter  (expiration) ║
+        ║                                                                      ║
+        ║  Rotation workflow (14-day notice required):                         ║
+        ║    See docs/security/android-certificate-pinning-runbook.md          ║
+        ╚══════════════════════════════════════════════════════════════════════╝
+
+        Placeholder values below must be replaced with real production data
+        from the server pin bundle before releasing to production.
+        See: https://github.com/DanyalTorabi/sms-syncer-server/issues/130
+    -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- hostname → android-pin-bundle.json hosts[].hostname -->
+        <domain includeSubdomains="true">api.example.com</domain>
+        <!-- expiration → android-pin-bundle.json hosts[].validity.notAfter -->
+        <pin-set expiration="2027-01-01">
+            <!-- current → android-pin-bundle.json hosts[].pins.current -->
+            <pin digest="SHA-256">REPLACE_WITH_PROD_CURRENT_SPKI</pin>
+            <!-- backup  → android-pin-bundle.json hosts[].pins.backup -->
+            <pin digest="SHA-256">REPLACE_WITH_PROD_BACKUP_SPKI</pin>
+        </pin-set>
+    </domain-config>
+
+    <!-- Default: production HTTPS only, system CA trust anchors -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system"/>
         </trust-anchors>
     </base-config>
 </network-security-config>
-
