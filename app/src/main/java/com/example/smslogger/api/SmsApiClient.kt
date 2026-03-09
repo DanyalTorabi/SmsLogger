@@ -2,13 +2,16 @@ package com.example.smslogger.api
 
 import android.content.Context
 import android.util.Log
+import com.example.smslogger.BuildConfig
+import com.example.smslogger.data.exception.CertificatePinningException
+import com.example.smslogger.network.AuthInterceptor
 import kotlinx.serialization.json.Json
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
-import com.example.smslogger.network.AuthInterceptor
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
  * API client for communicating with SMS sync server.
@@ -21,7 +24,21 @@ import java.util.concurrent.TimeUnit
  * ([AuthRepository]). When instantiated for SMS syncing ([SmsSyncService]),
  * omit them — [AuthInterceptor] will inject the stored token instead (#49).
  *
- * Related: #48 (Auto-Logout), #49 (JWT header injection), #50 (API models)
+ * Certificate pinning (#56):
+ *  - In release builds, [BuildConfig.CERT_HOSTNAME], [BuildConfig.CERT_PIN_PRIMARY]
+ *    and [BuildConfig.CERT_PIN_BACKUP] must be set to real values.
+ *  - In debug builds those fields are empty strings → pinning is skipped.
+ *  - If the server URL starts with "http://" (cleartext), pinning is also skipped
+ *    with a warning (pinning only works over TLS).
+ *
+ * To extract the public-key pin for your server:
+ *   openssl s_client -connect yourdomain.com:443 \
+ *     | openssl x509 -pubkey -noout \
+ *     | openssl pkey -pubin -outform der \
+ *     | openssl dgst -sha256 -binary \
+ *     | openssl enc -base64
+ *
+ * Related: #48 (Auto-Logout), #49 (JWT header injection), #50 (API models), #56 (cert pinning)
  */
 class SmsApiClient(
     private val baseUrl: String,
@@ -41,7 +58,41 @@ class SmsApiClient(
         .writeTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .apply { if (context != null) addInterceptor(AuthInterceptor(context)) }
+        .apply { configureCertificatePinning(this) }
         .build()
+
+    /**
+     * Attaches a [CertificatePinner] when pinning is configured for the release build.
+     *
+     * Pinning is skipped when:
+     * - [BuildConfig.CERT_HOSTNAME] is blank (debug builds)
+     * - The [baseUrl] uses plain HTTP (pinning has no effect over cleartext)
+     */
+    private fun configureCertificatePinning(builder: OkHttpClient.Builder) {
+        val hostname = BuildConfig.CERT_HOSTNAME
+        val primaryPin = BuildConfig.CERT_PIN_PRIMARY
+        val backupPin = BuildConfig.CERT_PIN_BACKUP
+
+        if (hostname.isBlank() || primaryPin.isBlank()) {
+            Log.d(TAG, "Certificate pinning disabled (debug build or pins not configured)")
+            return
+        }
+
+        if (baseUrl.startsWith("http://")) {
+            Log.w(TAG, "Certificate pinning skipped – baseUrl uses plain HTTP, not HTTPS. " +
+                    "Pinning only works over TLS.")
+            return
+        }
+
+        val pinner = CertificatePinner.Builder()
+            .add(hostname, primaryPin)
+            .apply { if (backupPin.isNotBlank()) add(hostname, backupPin) }
+            .build()
+
+        builder.certificatePinner(pinner)
+        Log.i(TAG, "Certificate pinning enabled for host: $hostname")
+    }
+
 
     // Token cache – used only during the initial login/testConnection flow
     private var cachedToken: String? = null
@@ -96,6 +147,9 @@ class SmsApiClient(
                 }
                 null
             }
+        } catch (e: SSLPeerUnverifiedException) {
+            Log.e(TAG, "Certificate pinning failure during login – possible MITM attack", e)
+            throw CertificatePinningException(cause = e)
         } catch (e: IOException) {
             Log.e(TAG, "Network error during login", e)
             null
@@ -154,6 +208,9 @@ class SmsApiClient(
                 }
                 false
             }
+        } catch (e: SSLPeerUnverifiedException) {
+            Log.e(TAG, "Certificate pinning failure during SMS sync – possible MITM attack", e)
+            throw CertificatePinningException(cause = e)
         } catch (e: IOException) {
             Log.e(TAG, "Network error sending SMS", e)
             false

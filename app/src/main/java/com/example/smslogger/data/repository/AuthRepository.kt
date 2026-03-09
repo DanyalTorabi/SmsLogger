@@ -7,6 +7,7 @@ import com.example.smslogger.api.UserInfo
 import com.example.smslogger.data.exception.AccountInactiveException
 import com.example.smslogger.data.exception.AccountLockedException
 import com.example.smslogger.data.exception.AuthException
+import com.example.smslogger.data.exception.CertificatePinningException
 import com.example.smslogger.data.exception.InvalidCredentialsException
 import com.example.smslogger.data.exception.NetworkException
 import com.example.smslogger.data.exception.ServerErrorException
@@ -132,6 +133,9 @@ class AuthRepository(
                 Result.failure(InvalidCredentialsException())
             }
 
+        } catch (e: CertificatePinningException) {
+            Log.e(TAG, "Certificate pinning failure during login – sync halted")
+            Result.failure(e)
         } catch (e: IOException) {
             Log.e(TAG, "Network error during login")
             Result.failure(NetworkException(cause = e))

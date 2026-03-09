@@ -1,20 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Allow cleartext traffic for development -->
+    <!--
+        Development domains: allow cleartext (HTTP) for emulator / local testing.
+        Certificate pinning is NOT applied here – debug BuildConfig fields are empty.
+    -->
     <domain-config cleartextTrafficPermitted="true">
-        <!-- Emulator access to host -->
         <domain includeSubdomains="false">10.0.2.2</domain>
-        <!-- Localhost for development -->
         <domain includeSubdomains="false">localhost</domain>
-        <!-- Local network range for testing -->
         <domain includeSubdomains="false">192.168.1.1</domain>
     </domain-config>
 
-    <!-- For production, you should use HTTPS only -->
+    <!--
+        Production domain: HTTPS only + certificate pin-set (#56).
+
+        IMPORTANT: Replace "yourdomain.com" and the sha256/ values with real data.
+        Extract the pin with:
+          openssl s_client -connect yourdomain.com:443 \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary \
+            | openssl enc -base64
+
+        Keep at least one backup pin (for certificate rotation) before deploying
+        a new certificate to the server.
+
+        expiration: set to a date beyond the certificate's validity period.
+        If the date passes without a cert rotation the OS will stop pinning
+        (fail-open) rather than breaking the app permanently.
+    -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">yourdomain.com</domain>
+        <pin-set expiration="2027-01-01">
+            <!-- Primary pin – current server certificate public key -->
+            <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
+            <!-- Backup pin – next certificate ready for rotation -->
+            <pin digest="SHA-256">BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
+        </pin-set>
+    </domain-config>
+
+    <!-- Default: production HTTPS only, system CA trust anchors -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system"/>
         </trust-anchors>
     </base-config>
 </network-security-config>
-

@@ -20,12 +20,25 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Certificate pinning disabled in debug – empty strings = no pinning
+            buildConfigField("String", "CERT_HOSTNAME", "\"\"")
+            buildConfigField("String", "CERT_PIN_PRIMARY", "\"\"")
+            buildConfigField("String", "CERT_PIN_BACKUP", "\"\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Replace these values with real sha256/ pins extracted via:
+            // openssl s_client -connect yourdomain.com:443 | openssl x509 -pubkey -noout \
+            //   | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary \
+            //   | openssl enc -base64
+            buildConfigField("String", "CERT_HOSTNAME", "\"yourdomain.com\"")
+            buildConfigField("String", "CERT_PIN_PRIMARY", "\"sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\"")
+            buildConfigField("String", "CERT_PIN_BACKUP", "\"sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=\"")
         }
     }
     compileOptions {
@@ -37,6 +50,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true // Required for BuildConfig.CERT_* fields (#56)
     }
 }
 

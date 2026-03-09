@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.smslogger.data.exception.AccountInactiveException
 import com.example.smslogger.data.exception.AccountLockedException
 import com.example.smslogger.data.exception.AuthException
+import com.example.smslogger.data.exception.CertificatePinningException
 import com.example.smslogger.data.exception.InvalidCredentialsException
 import com.example.smslogger.data.exception.NetworkException
 import com.example.smslogger.data.exception.ServerErrorException
@@ -187,13 +188,14 @@ class AuthViewModel(
      * falling back to sensible defaults.
      */
     private fun mapAuthExceptionToMessage(throwable: Throwable): String = when (throwable) {
-        is InvalidCredentialsException -> throwable.message ?: "Invalid username or password"
-        is AccountLockedException     -> throwable.message ?: "Account locked. Try again in 30 minutes"
-        is AccountInactiveException   -> throwable.message ?: "Your account has been deactivated"
-        is ServerErrorException       -> throwable.message ?: "Server temporarily unavailable"
-        is NetworkException           -> throwable.message ?: "Network error. Please try again"
-        is AuthException              -> throwable.message ?: "An error occurred. Please try again"
-        else                          -> "An error occurred. Please try again"
+        is InvalidCredentialsException  -> throwable.message ?: "Invalid username or password"
+        is AccountLockedException       -> throwable.message ?: "Account locked. Try again in 30 minutes"
+        is AccountInactiveException     -> throwable.message ?: "Your account has been deactivated"
+        is ServerErrorException         -> throwable.message ?: "Server temporarily unavailable"
+        is CertificatePinningException  -> throwable.message ?: "Security error: server certificate mismatch. Please contact support."
+        is NetworkException             -> throwable.message ?: "Network error. Please try again"
+        is AuthException                -> throwable.message ?: "An error occurred. Please try again"
+        else                            -> "An error occurred. Please try again"
     }
 }
 
