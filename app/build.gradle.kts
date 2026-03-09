@@ -32,13 +32,23 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Replace these values with real sha256/ pins extracted via:
-            // openssl s_client -connect yourdomain.com:443 | openssl x509 -pubkey -noout \
-            //   | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary \
-            //   | openssl enc -base64
-            buildConfigField("String", "CERT_HOSTNAME", "\"yourdomain.com\"")
-            buildConfigField("String", "CERT_PIN_PRIMARY", "\"sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\"")
-            buildConfigField("String", "CERT_PIN_BACKUP", "\"sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=\"")
+            // ── Certificate Pinning – SOURCE OF TRUTH ────────────────────────
+            // Values MUST be derived from the server pin bundle before release:
+            //   DanyalTorabi/sms-syncer-server → docs/security/android-pin-bundle.json
+            //   Server handoff issue: DanyalTorabi/sms-syncer-server#130
+            //   Rotation runbook:     docs/security/android-certificate-pinning-runbook.md
+            //
+            // Local dev / staging / production setup:
+            //   See docs/security/CERTIFICATE_PINNING.md in this repo
+            //
+            // Mapping:
+            //   CERT_HOSTNAME    ← hosts[].hostname
+            //   CERT_PIN_PRIMARY ← hosts[].pins.current  (sha256/...)
+            //   CERT_PIN_BACKUP  ← hosts[].pins.backup   (sha256/...)
+            // ─────────────────────────────────────────────────────────────────
+            buildConfigField("String", "CERT_HOSTNAME", "\"api.example.com\"")
+            buildConfigField("String", "CERT_PIN_PRIMARY", "\"sha256/REPLACE_WITH_PROD_CURRENT_SPKI\"")
+            buildConfigField("String", "CERT_PIN_BACKUP", "\"sha256/REPLACE_WITH_PROD_BACKUP_SPKI\"")
         }
     }
     compileOptions {

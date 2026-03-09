@@ -31,12 +31,8 @@ import javax.net.ssl.SSLPeerUnverifiedException
  *  - If the server URL starts with "http://" (cleartext), pinning is also skipped
  *    with a warning (pinning only works over TLS).
  *
- * To extract the public-key pin for your server:
- *   openssl s_client -connect yourdomain.com:443 \
- *     | openssl x509 -pubkey -noout \
- *     | openssl pkey -pubin -outform der \
- *     | openssl dgst -sha256 -binary \
- *     | openssl enc -base64
+ * See [docs/security/CERTIFICATE_PINNING.md] for local dev setup, staging/production
+ * configuration, and the certificate rotation workflow.
  *
  * Related: #48 (Auto-Logout), #49 (JWT header injection), #50 (API models), #56 (cert pinning)
  */
